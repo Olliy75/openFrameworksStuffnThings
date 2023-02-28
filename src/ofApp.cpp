@@ -919,6 +919,15 @@ void drawTorusWithMeshSetup(float x, float y, float z, float r, float R, float s
 	//*/
 	//draw mesh
 	//mesh.drawWireframe();
+	//mesh.draw();
+
+
+	for (float j = 0; j < 1; j += 1 / num) {
+		for (float i = 0; i < 1; i += 1 / num) {
+			mesh.addTexCoord(ofVec2f(0 + i, 0 + j));
+		}
+	}
+	//im assiming this needs to happen for each vertex, is a2d coordinate of where in the texture to take image, 0-1 is the width n height of it
 
 }
 void drawSphereWithMeshSetup(float x, float y, float z, float r, float sides) {
@@ -940,7 +949,7 @@ void drawSphereWithMeshSetup(float x, float y, float z, float r, float sides) {
 			sphericalCoords[1] += (phi) * (acos(-1) / 180);
 			sphericalCoords[2] += (theta) * (acos(-1) / 180);
 			auto cartesianCoords = sphericalToCartesian(sphericalCoords);
-			/*if (cartesianCoords.x < 0) {
+		/*	if (cartesianCoords.x < 0) {
 				sphericalCoords[1] += (180) * (acos(-1) / 180);
 				sphericalCoords[1] = (atan(1) * 4) - sphericalCoords[1];
 				cartesianCoords = sphericalToCartesian(sphericalCoords);
@@ -1029,7 +1038,8 @@ void drawSphereWithMeshSetup(float x, float y, float z, float r, float sides) {
 	//=====================PROBLEM BELOW - BAD CODE - DOESNT WORK=========================//
 
 	//((180/sides)*num)-1
-	float max = ((180 / sides) * num) - 1;
+
+	/*float max = ((180 / sides) * num) - 1;
 	float smallCounter = 0;
 	for (int i = 0; i < num -1; i++) {
 		float firstRing = (num / 2) - 1 + i;
@@ -1043,7 +1053,8 @@ void drawSphereWithMeshSetup(float x, float y, float z, float r, float sides) {
 	}
 	mesh.addIndex(max - num + 1);
 	mesh.addIndex(max);
-	mesh.addIndex(smallCounter);
+	mesh.addIndex(smallCounter);*/
+
 	//a-11,a,b+3
 	
 	//========================PROBLEM ABOVE - BAD CODE - DOESNT WORK==============================//
@@ -1118,7 +1129,7 @@ void drawSphereWithMeshSetup(float x, float y, float z, float r, float sides) {
 
 	//======================PROBLEM BELOW - BAD CODE - DOESNT WORK=========================//
 
-	max = ((180 / sides) * num) - 1;
+	/*max = ((180 / sides) * num) - 1;
 	smallCounter = 0;
 	for (int i = 0; i <= (num/2); i++) {
 		float firstRing = (num / 2) - 1 + i;
@@ -1137,7 +1148,7 @@ void drawSphereWithMeshSetup(float x, float y, float z, float r, float sides) {
 		mesh.addIndex(reset - 1);
 		mesh.addIndex(reset);
 		reset++;
-	}
+	}*/
 
 	//========================PROBLEM ABOVE - BAD CODE - DOESNT WORK==============================//
 
@@ -1151,6 +1162,50 @@ void drawSphereWithMeshSetup(float x, float y, float z, float r, float sides) {
 	// 
 	//mesh.drawVertices();
 	//mesh.draw();
+}
+void createSphere(float radius, float numSides, float numStacks, ofVec3f center) {
+	//=Create vertices=//
+	// Calculate the angle between each stack and each side of the sphere
+	float phiStep = acos(-1) / numStacks;
+	float thetaStep = 2 * acos(-1) / numSides;
+
+	// Loop over each stack and side of the sphere and add the vertex
+	for (int i = 0; i <= numStacks; i++) {
+		for (int j = 0; j <= numSides; j++) {
+			std::vector<float> vertex = { radius,j * thetaStep, i * phiStep };
+			mesh.addVertex(sphericalToCartesian(vertex) + center);
+		}
+	}
+
+	//=Create indices=//
+	// Loop over each stack and side of the sphere (again)
+	// to create the indices that define the triangles that make up the sphere's surface
+	for (int i = 0; i < numStacks; i++) {
+		int stackStart = i * (numSides + 1); // The starting vertex index for the current stack
+		int nextStackStart = (i + 1) * (numSides + 1); // The starting vertex index for the next stack
+
+		for (int j = 0; j < numSides; j++) {
+			mesh.addIndex(stackStart + j);
+			mesh.addIndex(nextStackStart + j);
+			mesh.addIndex(nextStackStart + j + 1);
+
+			mesh.addIndex(stackStart + j);
+			mesh.addIndex(nextStackStart + j + 1);
+			mesh.addIndex(stackStart + j + 1);
+		}
+	}
+	
+	//=Create Normals=//
+	for (int i = 0; i < mesh.getNumVertices(); i++) {
+		mesh.addNormal(10*normalize(findVector(center, mesh.getVertex(i))));
+	}
+
+	//=Create texture coords=//
+	for (float j = 0; j < 1; j += 1 / numStacks) {
+		for (float i = 0; i < 1; i += 1 / numSides) {
+			mesh.addTexCoord(ofVec2f(0 + i, 0 + j));
+		}
+	}
 }
 void createDirectionalLight(ofVec3f lightVector, ofColor color) {
 	glEnable(GL_DEPTH_TEST);
@@ -1308,6 +1363,11 @@ void meshTerrain(float x, float y, float z, float width, float length, float max
 	}
 	mesh.addNormal(20 * normalize(crossProduct(findVector(mesh.getVertex((resolution * resolution) - 1), mesh.getVertex((resolution * resolution) - 1 -1)), findVector(mesh.getVertex((resolution * resolution) - 1), mesh.getVertex((resolution * resolution) - 1)))));
 
+	for (float j = 0; j < 1; j += 1 / resolution) {
+		for (float i = 0; i < 1; i += 1 / resolution) {
+			mesh.addTexCoord(ofVec2f(0 + i, 0 + j));
+		}
+	}
 }
 ofPoint midpoint3d(float x1,float y1,float z1,float x2,float y2,float z2) {
 	ofPoint output;
@@ -1470,11 +1530,35 @@ void fractalMountain2ElectricBoogaloo(float x1, float y1, float z1,float width, 
 		
 
 }
-//--------------------------------------------------------------
+//===============================================================================//
 void ofApp::setup(){
+	gui.setup();
+
+	gui.setSize(ofGetWidth() / 4, ofGetHeight() / 2);
+
+	gui.add(intSlider.setup("int slider", 64, 3, 64));
+	gui.add(floatSlider.setup("float slider", 30.0, 0.0, 300.0));
+
+	gui.add(toggle.setup("toggle", false));
+	gui.add(button.setup("button"));
+	gui.add(label.setup("label", "this is a label"));
+
+	gui.add(intField.setup("int field", 100, 0, 100));
+	gui.add(floatField.setup("float field", 100.0, 0.0, 100.0));
+	gui.add(textField.setup("text field", "text"));
+
+	gui.add(vec2Slider.setup("vec2 slider", ofVec2f(0, 0), ofVec2f(0, 0), ofVec2f(ofGetWidth(), ofGetHeight())));
+	gui.add(vec3Slider.setup("vec3 slider", ofVec3f(100, 150, 90), ofVec3f(0, 0, 0), ofVec3f(255, 255, 255)));
+	gui.add(vec4Slider.setup("vec4 slider", ofVec4f(0, 0, 0, 0), ofVec4f(0, 0, 0, 0), ofVec4f(255, 255, 255, 255)));
+
+	ofDisableAlphaBlending();
+	ofEnableDepthTest();
+	ofDisableArbTex();
+	ofLoadImage(mTex, "sprinkles.png");
+	// 
 	//drawSphereWithMesh(0, 0, 0, 100, 18);
 	glPointSize(4);
-	//drawSphereWithMeshSetup(0, 0, 0, 100, 12);
+	//drawSphereWithMeshSetup(0, 0, 0, 100, 16);
 	//drawTorusWithMeshSetup(0, 0, 0, 100, 200, 240);
 	//createDirectionalLight(ofVec3f(0,1,1),ofColor(255, 180, 128));
 	/*
@@ -1491,18 +1575,41 @@ void ofApp::setup(){
 	//fractalMountain(-1000, -500, 0, 0, 500, 0, 1000, -500, 0, 4, 1000);
 	//fractalMountain2ElectricBoogaloo(-1000, -500, 0, 2000, 1000, 40, 200);
 	//meshTerrain(-2450, -2450, 0, 4900, 4900, 500, 49);
-	meshTerrain(-450, -450, 0, 900, 900, 100, 9);
+	//meshTerrain(-450, -450, 0, 900, 900, 100, 9);
+	
+	createSphere(100.0, 40, 40, ofVec3f(0, 0, 0));
+
+
+
 	createDirectionalLight(ofVec3f(0,1,1),ofColor(178, 190, 181));
 }	
 
 //--------------------------------------------------------------
 void ofApp::update(){
+	
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+
+	//if (button) {
+	//	ofSetColor(ofRandom(vec3Slider->x), (vec3Slider->y), (vec3Slider->z));
+	//}
+	//ofDrawCircle(ofGetWidth() / 2, ofGetHeight() / 2, 128);
+
+	//ofSetCircleResolution(intSlider);
+	//ofSetColor(vec4Slider->x, vec4Slider->y, vec4Slider->z, vec4Slider->w);
+	//ofDrawCircle(vec2Slider->x, vec2Slider->y, 128);
+
+	ofDisableDepthTest();
+	gui.draw();
+	ofEnableDepthTest();
+
 	cam.begin();
-	ofNoFill();	
+	mTex.bind();
+	ofNoFill();
+	
+
 	//ofLight light;
 	//light.setPosition(0, 0, 0);
 	//light.enable();
@@ -1559,9 +1666,17 @@ void ofApp::draw(){
 		
 	//mesh.drawWireframe();
 
+	/*for (int i = 0; i < mesh.getNumVertices(); i++) {
+		ofDrawBitmapString(i, mesh.getVertex(i));
+	}*/
+
 	/*mesh.drawVertices();*/
 
+
+	
 	mesh.draw();
+
+	//sphere.draw();
 	//ofSetColor(ofColor(255, 0, 0));
 	//for (int i = 0; i < mesh.getNumVertices(); i++) {
 	//	ofDrawLine(mesh.getVertex(i), ofPoint(mesh.getVertex(i).x + mesh.getNormal(i).x, mesh.getVertex(i).y + mesh.getNormal(i).y, mesh.getVertex(i).z + mesh.getNormal(i).z));
@@ -1572,6 +1687,8 @@ void ofApp::draw(){
 	//}
 	//drawSphereWithMeshSetup(0, 0, 0, 100, 12);
 	//meshTerrain(0, 0, 0, 100, 100, 20, 10);
+	 
+	mTex.unbind();
 	cam.end();
 }
 
