@@ -1,7 +1,13 @@
 #########################
 # openFrameworks patterns
 #########################
+
+
+# this was added because of git add . not working and is what chatGPT told me to do
 .vs/ofCodingTasks/
+# this was added because of git add . not working and is what chatGPT told me to do
+
+
 # build files
 openFrameworks.a
 openFrameworksDebug.a

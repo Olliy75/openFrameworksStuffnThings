@@ -4,679 +4,7 @@
 #include <cstdlib>  // for rand and RAND_MAX
 #include <ctime>    // for time
 ofMesh mesh;
-void dot(float x,float y) {
-	ofDrawRectangle(x, y, 1, 1);
-}
-void horizontalLine() {
-	for (int i = 64; i < 128; i++) {
-		ofDrawRectangle(i, 64, 1, 1);
-	}
-}
-void verticalLine() {
-	for (int i = 64; i < 128; i++) {
-		ofDrawRectangle(64, i, 1, 1);
-	}
-}
-void diagonalLine() {
-	for (int i = 64; i < 128; i++) {
-		ofDrawRectangle(i, i, 1, 1);
-	}
-}
-void diagonalLineArbitrary(int slope) {
-	int yValue = 64;
-	// so say the slope is 3, then i just add another loops for the number in the slope and adds another pixel
-	// this like makes a like that is horizontal, i need to mess with the y value which increases to the slope
-	// need to add a dot on each x coord based on the number of slope, and need to keep increasing the y value
-	for (int i = 64; i < 128; i++) {
-		for (int j = 0; j <= slope; j++) {
-			ofDrawRectangle(i, yValue, 1, 1);
-			yValue++;
-		}
-		
-	}
-}
-void straightLineBetweenPoints(int x1, int y1, int x2, int y2) {
-	if (y1 == y2) {
-		//means that it is horizontal
-		for (int i = x1; i < x2; i++) {
-			ofDrawRectangle(i, y1, 1, 1);
-		}
-	}
-	else if (x1 == x2) {
-		// means that it is vertical
-		for (int i = y1; i < y2; i++) {
-			ofDrawRectangle(x1, i, 1, 1);
-		}
-	}
-}
-void lineBetweenTwoPoints(int x1, int y1, int x2, int y2) {
-	if ((x1 > x2)&&(y1 > y2)) {
-		int tempx = x1;
-		int tempy = y1;
-		x1 = x2;
-		y1 = y2;
-		x2 = tempx;
-		y2 = tempy;
-	}
-	int slope = ((y2 - y1) / (x2 - x1));
-	if (slope == 0) {
-		straightLineBetweenPoints(x1, y1, x2, y2);
-	}
-	if (slope > 0)
-	{
-		int yValue = y1;
-		for (int i = x1; i < x2; i++) {
-			for (int j = 0; j <= slope; j++) {
-				ofDrawRectangle(i, yValue, 1, 1);
-				yValue++;
-			}
-		}
-	}
-	else {
-		//
-		slope = slope + (slope * 2);
-		int yValue = y1;
-		for (int i = x1; i > x2; i--) {
-			for (int j = slope; j >= 0; j--) {
-				ofDrawRectangle(i, yValue, 1, 1);
-				yValue--;
-			}
-		}
-	}
-
-}
-//start again using y = mx+c, use coords and find line that goes through those two points, then plot a line using y=mx+c.
-std::pair<float, float> findLineEquation(float x1, float y1, float x2, float y2) {
-	float m = ((y2 - y1) / (x2 - x1));
-		//y1=(m*x1)+c
-		//c = y1-(m*x1)
-		float c = y1 - (m * x1);
-		return std::pair<float, float>(m, c);
-}
-void drawLineUsingFormula(float x1, float y1, float x2, float y2) {
-	if (x1 == x2) {
-		for (int i = y1; i < y2; i++) {
-			ofDrawRectangle(x1, i, 1, 1);
-		}
-	}
-	else {
-		auto mc = findLineEquation(x1, y1, x2, y2);
-		float m = mc.first;
-		float c = mc.second;
-
-		if (x1 < x2) {
-			for (int i = x1; i < x2; i++) {
-				ofDrawRectangle(i, ((m * i) + c), 1, 1);
-			}
-		}
-		else {
-			for (int i = x2; i < x1; i++) {
-				ofDrawRectangle(i, ((m * i) + c), 1, 1);
-			}
-		}
-
-		if (y1 < y2) {
-			for (int i = y1; i < y2; i++) {
-				ofDrawRectangle(((i - c) / m), i, 1, 1);
-			}
-		}
-		else {
-			for (int i = y2; i < y1; i++) {
-				ofDrawRectangle(((i - c) / m), i, 1, 1);
-			}
-		}
-	}
-	
-}
-void drawSquare(float x1, float y1, float width) {
-	//topLeft - topRight
-	drawLineUsingFormula(x1, y1, (x1 + width), y1);
-	//topLeft - bottomLeft
-	drawLineUsingFormula(x1, y1, x1, (y1 + width));
-	//bottomLeft - bottomRight
-	drawLineUsingFormula(x1, (y1 + width), (x1 + width), (y1 + width));
-	//topRight - bottomRight
-	drawLineUsingFormula((x1 + width), y1, (x1 + width), (y1 + width));
-}
-//rotation formula for coords is 
-// newX = oldX*cos(clockwise rotation angle) - oldY*sin(clockwise rotation angle)
-// newY = oldY*cos(clockwise rotation angle) + oldX*sin(clockwise rotation angle)
-std::pair<float, float> getRotateCoords(float x1, float y1, float rotation) {
-	float newX = x1*cos(rotation) - y1*sin(rotation);
-	float newY = y1*cos(rotation) + x1*sin(rotation);
-	return std::pair<float, float>(newX, newY);
-}
-void drawSquareRotationOrigin(float x1, float y1, float width, float rotation) {
-	rotation = rotation * (acos(-1) / 180);
-	auto topLeft = getRotateCoords(x1, y1, rotation);
-	auto topRight = getRotateCoords((x1 + width), y1, rotation);
-	auto bottomLeft = getRotateCoords(x1, (y1 + width), rotation);
-	auto bottomRight = getRotateCoords((x1 + width), (y1 + width), rotation);
-	//topLeft - topRight
-	drawLineUsingFormula(topLeft.first,topLeft.second,topRight.first,topRight.second);
-	//topLeft - bottomLeft
-	drawLineUsingFormula(topLeft.first, topLeft.second, bottomLeft.first, bottomLeft.second);
-	//bottomLeft - bottomRight
-	drawLineUsingFormula(bottomLeft.first, bottomLeft.second, bottomRight.first, bottomRight.second);
-	//topRight - bottomRight
-	drawLineUsingFormula(topRight.first, topRight.second, bottomRight.first, bottomRight.second);
-}
-void DrawSquareRotationArbitrary(float x1, float y1, float width, float rotation, float pointx, float pointy) {
-	//move all points so that the arbitrary point becomes 0,0
-	float translatedx = x1 - pointx;
-	float translatedy = y1 - pointx;
-	//throw it into the rotate about origin
-	rotation = rotation * (acos(-1) / 180);
-	auto topLeft = getRotateCoords(x1, y1, rotation);
-	auto topRight = getRotateCoords((x1 + width), y1, rotation);
-	auto bottomLeft = getRotateCoords(x1, (y1 + width), rotation);
-	auto bottomRight = getRotateCoords((x1 + width), (y1 + width), rotation);
-	//translate back to original state
-	topLeft.first = topLeft.first + pointx;
-	topLeft.second = topLeft.second + pointy;
-
-	topRight.first = topRight.first + pointx;
-	topRight.second = topRight.second + pointy;
-
-	bottomLeft.first = bottomLeft.first + pointx;
-	bottomLeft.second = bottomLeft.second + pointy;
-
-	bottomRight.first = bottomRight.first + pointx;
-	bottomRight.second = bottomRight.second + pointy;
-		
-	//draw
-	drawLineUsingFormula(topLeft.first, topLeft.second, topRight.first, topRight.second);
-	//topLeft - bottomLeft
-	drawLineUsingFormula(topLeft.first, topLeft.second, bottomLeft.first, bottomLeft.second);
-	//bottomLeft - bottomRight
-	drawLineUsingFormula(bottomLeft.first, bottomLeft.second, bottomRight.first, bottomRight.second);
-	//topRight - bottomRight
-	drawLineUsingFormula(topRight.first, topRight.second, bottomRight.first, bottomRight.second);
-}
-void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-	drawLineUsingFormula(x1, y1, x2, y2);
-	drawLineUsingFormula(x1, y1, x3, y3);
-	drawLineUsingFormula(x3, y3, x2, y2);
-}
-void drawEqualatralTriangle(float x, float y, float width) {
-	//draw line from (x,y) to (x+width,y)
-	//draw line from (x,y) to (x+(width/2),y-tan(cos(1/2))*(width/2))
-	//draw line from (x+width,y) to (x+(width/2),y-tan(cos(1/2))*(width/2))
-	//drawLineUsingFormula(x, y, x + width, y);
-	//drawLineUsingFormula(x, y, x + (width / 2), y - sqrt((width * width) - ((width / 2) * (width / 2))));
-	//drawLineUsingFormula(x + width, y,x + (width / 2), y - sqrt((width * width) - ((width / 2) * (width / 2))));
-	float x2 = x + width;
-	float y2 = y;
-	float x3 = x + (width / 2);
-	float y3 = y - sqrt((width * width) - ((width / 2) * (width / 2)));
-	drawTriangle(x, y, x2, y2, x3, y3);
-}
-std::pair<float, float> midpoint(float x1,float y1,float x2,float y2) {
-	return std::pair<float, float>((x1+x2)/2, (y1+y2)/2);
-}
-void sepinski(float x1, float y1, float x2, float y2, float x3, float y3, int n) {
-	//is 3 ways to draw it seems, need to pick, maybe start by doing it with squares because i already have the code and triangles come later.
-
-	//draw a serpinski with just 3 squares, then draw a serpinski using the last serpinski three times etc etc etc
-
-	//first one is just three points at the bottom left of the screen
-	//0,765,1,765,0.5,654
-	//in reality this is (x,y)(x+width,y)(x+(width/2),y-width)
-	//then set the new width to double what it was before, rice repeat?
-	//float x = 0;
-	//float y = 765;
-	//for (float i = 1; i < 1000; i=i*2) {
-	//	ofDrawRectangle(x, y, i, i);
-	//	ofDrawRectangle(x+i, y, i, i);
-	//	ofDrawRectangle(x+(i/2), y-i, i, i);
-	//}
-
-	//start from max size and work way back down?
-	
-	drawTriangle(x1, y1, x2, y2, x3, y3);
-
-	// Seed the random number generator with the current time
-	srand(time(0));
-
-	// Generate a random integer between 1 and 10
-
-	//int r = rand() % 10 + 1;
-	//if (r <= 3) {
-	//	ofSetColor(255, 0, 0);
-	//}
-	//else if(r <= 6){
-	//	ofSetColor(0, 255, 0);
-	//}
-	//else if (r <= 9) {
-	//	ofSetColor(0, 0, 255);
-	//}
-	//else {
-	//	ofSetColor(0, 0, 0);
-	//}
-
-	if (n == 0) {
-		return;
-	}
-
-	std::pair<float, float> m1 = midpoint(x1, y1, x2, y2);
-	std::pair<float, float> m2 = midpoint(x2, y2, x3, y3);
-	std::pair<float, float> m3 = midpoint(x1, y1, x3, y3);
-
-	drawTriangle(m1.first, m1.second, m2.first, m2.second, m3.first, m3.second);
-	n--;
-	sepinski(m1.first, m1.second, x2, y2, m2.first, m2.second, n);
-	sepinski(m3.first, m3.second, m2.first, m2.second, x3, y3, n);
-	sepinski(x1, y1, m1.first, m1.second, m3.first, m3.second, n);
-}
-void drawCircle(float h, float k, float r) {
-	//(x - h) ^ 2 + (y - k) ^ 2 = r ^ 2
-	//(h,k) = center of the circle
-	//r = radius of the circle
-
-	//y = k + sqrt(r ^ 2 - (x - h) ^ 2)
-	//    k - sqrt(r ^ 2 - (x - h) ^ 2)
-
-	//x = h + sqrt(r ^ 2 - (y - k) ^ 2)
-	//	  h - sqrt(r ^ 2 - (y - k) ^ 2)
-
-	//rince and repeat plotting all whole number values of y and all of em for x?
-
-	//min value for x and y is h - r and k - r
-	//max value for x and y is h + r and k + r
-	for (int x = h - r; x < h + r; x++) {
-		ofDrawRectangle(x, k + sqrt((r * r) - ((x - h) * (x - h))), 1, 1);
-		ofDrawRectangle(x, k - sqrt((r * r) - ((x - h) * (x - h))), 1, 1);
-	}
-
-	for (int y = k - r; y < k + r; y++) {
-		ofDrawRectangle(h + sqrt((r * r) - ((y - k) * (y - k))), y, 1, 1);
-		ofDrawRectangle(h - sqrt((r * r) - ((y - k) * (y - k))), y, 1, 1);
-	}
-}
-std::pair<float, float> getDegreesRotation(float h,float k, float x1, float y1, float rotation) {
-	auto newCoords = getRotateCoords(x1 - h, y1 - k, rotation * (acos(-1) / 180));
-	return std::pair<float, float>(newCoords.first + h,newCoords.second + k);
-}
-std::pair<float, float> getDegreesRotationZ(float h,float k, float y1, float z1, float rotation) {
-	rotation = rotation * (acos(-1) / 180);
-	float newY = (y1-h) * cos(rotation) - (z1-k) * sin(rotation);
-	float newZ = (z1-k) * cos(rotation) + (y1-h) * sin(rotation);
-	return std::pair<float, float>(newY + h, newZ + k);
-}
-void drawCylinder(float h1, float k1, float r, float h2, float k2) {
-	drawCircle(h1, k1, r);
-	drawCircle(h2, k2, r);
-
-	drawLineUsingFormula(h1, k1 + r, h2, k2 + r);
-	drawLineUsingFormula(h1 + r, k1, h2 + r, k2);
-	drawLineUsingFormula(h1, k1 - r, h2, k2 - r);
-	drawLineUsingFormula(h1 - r, k1, h2 - r, k2);
-}
-void drawCone(float h, float k, float r, float x, float y) {
-	drawCircle(h, k, r);
-
-	//8 values of coordinates of the circle or something like that, need to figure out how to do that tho
-
-	//first 4 lines
-	drawLineUsingFormula(h, k + r, x, y);
-	drawLineUsingFormula(h + r, k, x, y);
-	drawLineUsingFormula(h, k - r, x, y);
-	drawLineUsingFormula(h - r, k, x, y);
-
-	auto points = getDegreesRotation(h, k, h, k + r, 35);
-	drawLineUsingFormula(points.first, points.second, x, y);
-	 points = getDegreesRotation(h, k, h + r, k,35);
-	drawLineUsingFormula(points.first, points.second, x, y);
-	 points = getDegreesRotation(h, k, h, k - r,35);
-	drawLineUsingFormula(points.first, points.second, x, y);
-	 points = getDegreesRotation(h, k, h - r, k,35);
-	drawLineUsingFormula(points.first, points.second, x, y);
-	
-}
-void drawpyramid(float x1, float y1, float width, float x2, float y2) {
-	drawSquare(x1, y1, width);
-
-	std::pair<float, float> point1(x1,y1);
-	std::pair<float, float> point2(x1+width,y1);
-	std::pair<float, float> point3(x1+width,y1+width);
-	std::pair<float, float> point4(x1,y1+width);
-	std::pair<float, float> point5(x1+(width/2),y1);
-	std::pair<float, float> point6(x1+(width/2),y1+width);
-	std::pair<float, float> point7(x1,y1+(width/2));
-	std::pair<float, float> point8(x1+width,y1+(width/2));
-
-	drawLineUsingFormula(point1.first, point1.second, x2, y2);
-	drawLineUsingFormula(point2.first, point2.second, x2, y2);
-	drawLineUsingFormula(point3.first, point3.second, x2, y2);
-	drawLineUsingFormula(point4.first, point4.second, x2, y2);
-	drawLineUsingFormula(point5.first, point5.second, x2, y2);
-	drawLineUsingFormula(point6.first, point6.second, x2, y2);
-	drawLineUsingFormula(point7.first, point7.second, x2, y2);
-	drawLineUsingFormula(point8.first, point8.second, x2, y2);
-
-}
-void drawCylinderWithStackedCircles(float h, float k, float r, float height, string direction) {
-	if (direction == "horizontal") {
-		//draw circles with incrementing y
-		for (int y = k; y < k+height; y=y+10) {
-			drawCircle(h, y, r);
-		}
-	}
-	else {
-		//draw cirlces with incrementing x
-		for (int x = h; x < h + height; x=x+10) {
-			drawCircle(x, k, r);
-		}
-	}
-}
-void drawMeshCube(float x, float y, float z, float size) {
-	//so first you need to create all of the vertexs in such a way where the order is known
-	//add them as vertexs in an order where three at a time create a triangle
-	ofMesh mesh;
-	//a: first side bottom left
-	mesh.addVertex(ofPoint(x, y, z));
-	mesh.addVertex(ofPoint(x, y + size, z));
-	mesh.addVertex(ofPoint(x + size, y + size, z));
-	//a: first side top right
-	mesh.addVertex(ofPoint(x, y, z));
-	mesh.addVertex(ofPoint(x + size, y, z));
-	mesh.addVertex(ofPoint(x + size, y + size, z));
-
-	//b:second side bottom left
-	mesh.addVertex(ofPoint(x, y, z));
-	mesh.addVertex(ofPoint(x + size, y, z));
-	mesh.addVertex(ofPoint(x + size, y, z + size));
-	//b:second side top right
-	mesh.addVertex(ofPoint(x, y, z));
-	mesh.addVertex(ofPoint(x, y, z + size));
-	mesh.addVertex(ofPoint(x + size, y, z + size));
-
-	//c:third side bottom left
-	mesh.addVertex(ofPoint(x, y, z));
-	mesh.addVertex(ofPoint(x, y + size, z));
-	mesh.addVertex(ofPoint(x, y + size, z + size));
-	//c:third side top right
-	mesh.addVertex(ofPoint(x, y, z));
-	mesh.addVertex(ofPoint(x, y, z + size));
-	mesh.addVertex(ofPoint(x, y + size, z + size));
-
-	//switching to other side of the cube
-	x += size;
-	y += size;
-	z += size;
-
-	//a: first side bottom left OPPOSITE
-	mesh.addVertex(ofPoint(x, y, z));
-	mesh.addVertex(ofPoint(x, y - size, z));
-	mesh.addVertex(ofPoint(x - size, y - size, z));
-	//a: first side top right OPPOSITE
-	mesh.addVertex(ofPoint(x, y, z));
-	mesh.addVertex(ofPoint(x - size, y, z));
-	mesh.addVertex(ofPoint(x - size, y - size, z));
-
-	//b:second side bottom left OPPOSITE
-	mesh.addVertex(ofPoint(x, y, z));
-	mesh.addVertex(ofPoint(x - size, y, z));
-	mesh.addVertex(ofPoint(x - size, y, z - size));
-	//b:second side top right OPPOSITE
-	mesh.addVertex(ofPoint(x, y, z));
-	mesh.addVertex(ofPoint(x, y, z - size));
-	mesh.addVertex(ofPoint(x - size, y, z - size));
-
-	//c:third side bottom left OPPOSITE
-	mesh.addVertex(ofPoint(x, y, z));
-	mesh.addVertex(ofPoint(x, y - size, z));
-	mesh.addVertex(ofPoint(x, y - size, z - size));
-	//c:third side top right OPPOSITE
-	mesh.addVertex(ofPoint(x, y, z));
-	mesh.addVertex(ofPoint(x, y, z - size));
-	mesh.addVertex(ofPoint(x, y - size, z - size));
-
-	for (int i = 0; i < 36; i++) {
-		mesh.addIndex(i);
-	}
-	mesh.drawWireframe();
-}
-void cleanDrawMeshCube(float x, float y, float z, float size) {
-
-}
-void drawLine3Dimensionally(ofPoint a, ofPoint b) {
-
-}
-std::pair<std::vector<ofPoint>, std::vector<float>> drawCircleWithMesh(float x, float y, float z, float r, float sides) {
-	int counter = 0;
-	std::vector<ofPoint> vertex;
-	std::vector<float> index;
-	sides = 360 / sides;
-	//add first point
-	ofMesh mesh;
-	mesh.addVertex(ofPoint(x,y,z));
-	vertex.push_back(ofPoint(x,y,z));
-	counter++;
-	//centre is now set to vertex 0
-	for (int i = 0; i < sides; i++) {
-		auto temp = getDegreesRotation(x, y, x, y + r, i * sides);
-		mesh.addVertex(ofPoint(temp.first,temp.second,z));
-		vertex.push_back(ofPoint(temp.first, temp.second, z));
-		counter++;
-	}
-
-	for (int i = 0; i < counter -1; i++) {
-		mesh.addIndex(0);
-		index.push_back(0);
-		mesh.addIndex(i);
-		index.push_back(i);
-		mesh.addIndex(i + 1);
-		index.push_back(i + 1);
-	}
-	mesh.drawWireframe();
-	return std::pair<std::vector<ofPoint>, std::vector<float>>(vertex,index);
-}
-void drawCylinderWithMesh(float x, float y, float z,float r,float sides,float width) {
-	std::vector<ofPoint> vertex1;
-	std::vector<float> index1;
-	std::vector<ofPoint> vertex2;
-	std::vector<float> index2;
-	std::pair<std::vector<ofPoint>, std::vector<float>> pair;
-
-	pair = drawCircleWithMesh(x, y, z + width / 2, r, sides);
-	vertex1 = pair.first;
-	index1 = pair.second;
-
-	pair = drawCircleWithMesh(x, y, z - width / 2, r, sides);
-	vertex2 = pair.first;
-	index2 = pair.second;
-	ofMesh mesh;
-	for (int i = 1; i < vertex1.size(); i++) {
-		//need a draw line function that works 3 dimensionally
-		//function(vertex1(i),vertex2(i));
-		mesh.addVertex(vertex1[i]);
-		mesh.addVertex(vertex2[i]);
-	}
-	for (int i = 0; i < vertex1.size()-1; i++) {
-		mesh.addVertex(vertex1[i]);
-		mesh.addVertex(vertex1[i + 1]);
-		mesh.addVertex(vertex2[i]);
-		mesh.addVertex(vertex2[i + 1]);
-
-		mesh.addIndex(i);
-		mesh.addIndex(i + 1);
-		mesh.addIndex(i + 2);
-
-		mesh.addIndex(i + 1);
-		mesh.addIndex(i + 2);
-		mesh.addIndex(i + 3);
-	}
-	mesh.drawWireframe();
-}
-void drawSphereWithMesh(float x, float y, float z, float r, float sides) {
-	float zPrime = z;
-	float num = sides;
-	sides = 360 / sides;
-	float h = x;
-	float k = y;
-	int counter = 0;
-
-	ofMesh mesh;
-
-	//for (int i = 0; i < sides; i++) {
-		//auto temp = getDegreesRotationZ(h, zPrime, y + r, z, i * sides);
-		//mesh.addVertex(ofPoint(z,temp.first, temp.second));
-	//}
-
-	for (int i = 0; i < num; i++) {
-		auto temp = getDegreesRotation(h, k, x, y+r, i * sides);
-		mesh.addVertex(ofPoint(temp.first, temp.second, z));
-		ofDrawBitmapString((i * sides), mesh.getVertex(mesh.getNumVertices() - 1));
-		//std::cout << temp.first;
-		//std::cout << ",";
-		//std::cout << temp.second;
-		//std::cout << ",";
-		//std::cout << z;
-		//std::cout << "\n";
-		counter++;
-	}
-	for (int i = 1; i < ceil(num/4)+1; i++) {
-		auto newLayer = getDegreesRotationZ(h, zPrime, y + r, z, i*sides);
-
-		for (int j = 0; j < num; j++) {
-			auto temp = getDegreesRotation(h, k, x, newLayer.first, j * sides);
-			mesh.addVertex(ofPoint(temp.first, temp.second, newLayer.second));
-			ofDrawBitmapString((j * sides), mesh.getVertex(mesh.getNumVertices() - 1));
-			//std::cout << temp.first;
-			//std::cout << ",";
-			//std::cout << temp.second;
-			//std::cout << ",";
-			//std::cout << newLayer.second;
-			//std::cout << "\n";
-			counter++;
-		}
-	}
-	for (int i = 1; i < ceil(num/4)+1; i++) {
-		auto newLayer = getDegreesRotationZ(h, zPrime, y + r, z, (i * sides)*-1);
-
-		for (int j = 0; j < num; j++) {
-			auto temp = getDegreesRotation(h, k, x, newLayer.first, j * sides);
-			mesh.addVertex(ofPoint(temp.first, temp.second, newLayer.second));
-			ofDrawBitmapString((j * sides) * -1, mesh.getVertex(mesh.getNumVertices()-1));
-			//std::cout << temp.first;
-			//std::cout << ",";
-			//std::cout << temp.second;
-			//std::cout << ",";
-			//std::cout << newLayer.second;
-			//std::cout << "\n";
-			counter++;
-		}
-	}
-	mesh.drawVertices();
-	//adding index is driving me crazy
-
-	//first triangle
-	
-	for (int j = 0; j < ceil(num / 4); j++) {
-		float offset = j * num;
-		for (int i = 0; i < num - 1; i++) {
-			mesh.addIndex(i + offset);
-			mesh.addIndex(i + num + offset);
-			mesh.addIndex(i + 1 + offset);
-		}
-		mesh.addIndex(0 + offset);
-		mesh.addIndex(num - 1 + offset);
-		mesh.addIndex((num - 1) + num + offset);
-	}
-	
-	
-	for (int i = 0; i < num - 1; i++) {
-		mesh.addIndex(i);
-		mesh.addIndex(i + (ceil(num / 4) + 1)*num);
-		mesh.addIndex(i + 1);
-	}
-	mesh.addIndex(0);
-	mesh.addIndex(num-1 + ((ceil(num / 4) + 1) * num));
-	mesh.addIndex(num-1);
-	
-	
-	for (int j = ceil(num / 4) + 1; j < ceil(num / 2); j++) {
-		float offset = j * num;
-		for (int i = 0; i < num - 1; i++) {
-			mesh.addIndex(i + offset);
-			mesh.addIndex(i + num + offset);
-			mesh.addIndex(i + 1 + offset);
-		}
-		mesh.addIndex(0 + offset);
-		mesh.addIndex(num - 1 + offset);
-		mesh.addIndex((num - 1) + num + offset);
-	}
-	
-	//second triangle
-	
-	for (int j = 0; j < ceil(num / 4); j++) {
-		float offset = j * num;
-		for (int i = 0; i < num - 1; i++) {
-			mesh.addIndex(i + 1+ num +offset);
-			mesh.addIndex(i + num + offset);
-			mesh.addIndex(i + 1 + offset);
-		}
-		mesh.addIndex(0 + offset);
-		mesh.addIndex(num + offset);
-		mesh.addIndex((num - 1) + num + offset);
-	}
-	
-
-	for (int i = 0; i < num - 1; i++) {
-		mesh.addIndex(i + 1 + ((ceil(num / 4) + 1) * num));
-		mesh.addIndex(i + ((ceil(num / 4) + 1) * num));
-		mesh.addIndex(i + 1);
-	}
-	mesh.addIndex(0);
-	mesh.addIndex(num - 1 + ((ceil(num / 4) + 1) * num));
-	mesh.addIndex(((ceil(num / 4) + 1)* num));
-
-	for (int j = ceil(num / 4) + 1; j < ceil(num / 2); j++) {
-		float offset = j * num;
-		for (int i = 0; i < num - 1; i++) {
-			mesh.addIndex(i + 1 + num + offset);
-			mesh.addIndex(i + num + offset);
-			mesh.addIndex(i + 1 + offset);
-		}
-		mesh.addIndex(0 + offset);
-		mesh.addIndex(num + offset);
-		mesh.addIndex((num - 1) + num + offset);
-	}
-
-	//mesh.addIndex(0);
-	//mesh.addIndex(1);
-	//mesh.addIndex(30);
-	//((num/2) -1)/2
-	//mesh.addIndex(0);
-	//mesh.addIndex(1);
-	//mesh.addIndex(num);
-
-
-		//for (int i = num; i < (num*2) - 1; i++) {
-		//	mesh.addIndex(i + offset);
-		//	mesh.addIndex(i + num + offset);
-		//	mesh.addIndex(i + 1 + offset);
-		//}
-		//mesh.addIndex(0 + offset+ num);
-		//mesh.addIndex(num - 1 + offset + num);
-		//mesh.addIndex((num - 1) + num + offset + num);
-	//mesh.addIndex(num);
-	//mesh.addIndex(num + 1);
-	//mesh.addIndex(num + num);
-	for (int i = 0; i < mesh.getNumIndices(); i+=3)
-	{
-		glEnable(GL_DEPTH_TEST);
-		//mesh.addColor(ofColor(ofRandom(255), ofRandom(255), ofRandom(255)));
-		//mesh.addColor(ofColor(ofRandom(255), ofRandom(255), ofRandom(255)));
-		//mesh.addColor(ofColor(0, 0, 255));
-	}
-	
-	mesh.drawWireframe();
-	
-	//ofDrawBitmapString("test word",20,20,20);
-	
-}
+int tickyTocky = 0;
 ofPoint sphericalToCartesian(std::vector<float> input) {
 	ofPoint output;
 	float rho = input[0];
@@ -930,240 +258,7 @@ void drawTorusWithMeshSetup(float x, float y, float z, float r, float R, float s
 	//im assiming this needs to happen for each vertex, is a2d coordinate of where in the texture to take image, 0-1 is the width n height of it
 
 }
-void drawSphereWithMeshSetup(float x, float y, float z, float r, float sides) {
-	////add vertices
-	ofPoint center;
-	center.x = x;
-	center.y = y;
-	center.z = z;
-	float num = sides;
-	sides = 360 / sides;
-	z = z - r;
-	x = x + r;
-	int counter = 0;
-	//180
-	//360
-	for (int phi = 0; phi < 180; phi += sides) {
-		for (int theta = 0; theta < 360; theta += sides){
-			auto sphericalCoords = cartesianToSpherical(ofPoint(x, y, z));
-			sphericalCoords[1] += (phi) * (acos(-1) / 180);
-			sphericalCoords[2] += (theta) * (acos(-1) / 180);
-			auto cartesianCoords = sphericalToCartesian(sphericalCoords);
-		/*	if (cartesianCoords.x < 0) {
-				sphericalCoords[1] += (180) * (acos(-1) / 180);
-				sphericalCoords[1] = (atan(1) * 4) - sphericalCoords[1];
-				cartesianCoords = sphericalToCartesian(sphericalCoords);
-			}*/
-			mesh.addVertex(ofPoint(cartesianCoords.x,cartesianCoords.y,cartesianCoords.z));
-			//ofDrawBitmapString(counter, cartesianCoords);
-			counter++;
-		}
-	}
-	//(180 / sides)-1
-	//
-	for (int j = 0; j < (180 / sides) - 1; j++) {
-		float offset = j * num;
-		for (int i = 0; i < num - 1; i++) {
-			mesh.addIndex(i + offset);
-			mesh.addIndex(i + num + offset);
-			mesh.addIndex(i + 1 + offset);
-		}
-		mesh.addIndex(0 + offset);
-		mesh.addIndex(num - 1 + offset);
-		mesh.addIndex((num - 1) + num + offset);
-	}
-	//
-	//
-	/*for (int i = 0; i < num - 1; i++) {
-		mesh.addIndex(((180 / sides)*num-1)+i);
-		mesh.addIndex(i + 1);
-		mesh.addIndex(i);
-	}
-	mesh.addIndex(0);
-	mesh.addIndex(num - 1);
-	mesh.addIndex((num - 1) * num);*/
-	//
-	/*
-	mesh.addIndex(60);
-	mesh.addIndex(71);
-	mesh.addIndex(4);
-	//a-11,a,b+4 ((num/2)-1)-1
-
-	mesh.addIndex(71);
-	mesh.addIndex(70);
-	mesh.addIndex(5);
-	//a,a-1,b+5 ((num/2)-1)
-	mesh.addIndex(70);
-	mesh.addIndex(69);
-	mesh.addIndex(6);
-	//a-1,a-2,b+6 ((num/2)-1)+1
-	mesh.addIndex(69);
-	mesh.addIndex(68);
-	mesh.addIndex(7);
-	//a-2,a-3,b+7 ((num/2)-1)+2
-	mesh.addIndex(68);
-	mesh.addIndex(67);
-	mesh.addIndex(8);
-	//a-3,a-4,b+8 ((num/2)-1)+3
-	mesh.addIndex(67);
-	mesh.addIndex(66);
-	mesh.addIndex(9);
-	//a-4,a-5,b+9 ((num/2)-1)+4
-	mesh.addIndex(66);
-	mesh.addIndex(65);
-	mesh.addIndex(10);
-	//a-5,a-6,b+10 ((num/2)-1)+5
-	mesh.addIndex(65);
-	mesh.addIndex(64);
-	mesh.addIndex(11);
-	//a-6,a-7,b+11 ((num/2)-1)+6
-	mesh.addIndex(64);
-	mesh.addIndex(63);
-	mesh.addIndex(0);
-	//a-7,a-8,b 0
-	mesh.addIndex(63);
-	mesh.addIndex(62);
-	mesh.addIndex(1);
-	//a-8,a-9,b+1 1
-	mesh.addIndex(62);
-	mesh.addIndex(61);
-	mesh.addIndex(2);
-	//a-10,a-11,b+2 2
-	mesh.addIndex(61);
-	mesh.addIndex(60);
-	mesh.addIndex(3);
-	//a-11,a-12,b+3 3
-	*/
-
-	//=====================PROBLEM BELOW - BAD CODE - DOESNT WORK=========================//
-
-	//((180/sides)*num)-1
-
-	/*float max = ((180 / sides) * num) - 1;
-	float smallCounter = 0;
-	for (int i = 0; i < num -1; i++) {
-		float firstRing = (num / 2) - 1 + i;
-		if (firstRing > num-1) {
-			firstRing = smallCounter;
-			smallCounter++;
-		}
-		mesh.addIndex(max - i);
-		mesh.addIndex(max - i - 1);
-		mesh.addIndex(firstRing);
-	}
-	mesh.addIndex(max - num + 1);
-	mesh.addIndex(max);
-	mesh.addIndex(smallCounter);*/
-
-	//a-11,a,b+3
-	
-	//========================PROBLEM ABOVE - BAD CODE - DOESNT WORK==============================//
-
-	 
-	for (int j = 0; j < (180 / sides) - 1; j++) {
-		float offset = j * num;
-		for (int i = 0; i < num - 1; i++) {
-			mesh.addIndex(i + 1 + num + offset);
-			mesh.addIndex(i + num + offset);
-			mesh.addIndex(i + 1 + offset);
-		}
-		mesh.addIndex(0 + offset);
-		mesh.addIndex(num + offset);
-		mesh.addIndex((num - 1) + num + offset);
-	}
-	
-/*
-	//4,5,71 b+4,b+5,a
-	mesh.addIndex(4);
-	mesh.addIndex(5);
-	mesh.addIndex(71);
-	//5,6,70 b+5,b+6,a-1
-	mesh.addIndex(5);
-	mesh.addIndex(6);
-	mesh.addIndex(70);
-	//6,7,69 b+6,b+7,a-2
-	mesh.addIndex(6);
-	mesh.addIndex(7);
-	mesh.addIndex(69);
-	//7,8,68 b+7,b+8,a-3
-	mesh.addIndex(7);
-	mesh.addIndex(8);
-	mesh.addIndex(68);
-	//8,9,67 b+8,b+9,a-4
-	mesh.addIndex(8);
-	mesh.addIndex(9);
-	mesh.addIndex(67);
-	//9,10,66 b+9,b+10,a-5
-	mesh.addIndex(9);
-	mesh.addIndex(10);
-	mesh.addIndex(66);
-	//10,11,65 b+9,b+10,a-6
-	mesh.addIndex(10);
-	mesh.addIndex(11);
-	mesh.addIndex(65);
-
-
-	//11,0,64 b+10,b,a-7
-	mesh.addIndex(11);
-	mesh.addIndex(0);
-	mesh.addIndex(64);
-
-
-	//0,1,63 b,b+1,a-8
-	mesh.addIndex(0);
-	mesh.addIndex(1);
-	mesh.addIndex(63);
-	//1,2,62 b+1,b+2,a-9
-	mesh.addIndex(1);
-	mesh.addIndex(2);
-	mesh.addIndex(62);
-	//2,3,61 b+2,b+3,a-10
-	mesh.addIndex(2);
-	mesh.addIndex(3);
-	mesh.addIndex(61);
-	//3,4,60 b+3,b+4,a-11
-	mesh.addIndex(3);
-	mesh.addIndex(4);
-	mesh.addIndex(60);
-	*/
-
-	//======================PROBLEM BELOW - BAD CODE - DOESNT WORK=========================//
-
-	/*max = ((180 / sides) * num) - 1;
-	smallCounter = 0;
-	for (int i = 0; i <= (num/2); i++) {
-		float firstRing = (num / 2) - 1 + i;
-			mesh.addIndex(max - i);
-			mesh.addIndex(firstRing-1);
-			mesh.addIndex(firstRing);
-		}
-
-	mesh.addIndex(0);
-	mesh.addIndex(max - (num/2) - 1);
-	mesh.addIndex(num - 1);
-
-	float reset = 1;
-	for (int i = (num / 2)+2; i < num; i++) {
-		mesh.addIndex(max - i);
-		mesh.addIndex(reset - 1);
-		mesh.addIndex(reset);
-		reset++;
-	}*/
-
-	//========================PROBLEM ABOVE - BAD CODE - DOESNT WORK==============================//
-
-
-	for (int i = 0; i < mesh.getNumVertices(); i++) {
-		mesh.addNormal(normalize(findVector(center, mesh.getVertex(i))));
-	}
-
-
-
-	// 
-	//mesh.drawVertices();
-	//mesh.draw();
-}
-void createSphere(float radius, float numSides, float numStacks, ofVec3f center) {
+void drawSphere(float radius, float numSides, float numStacks, ofVec3f center) {
 	//=Create vertices=//
 	// Calculate the angle between each stack and each side of the sphere
 	float phiStep = acos(-1) / numStacks;
@@ -1172,7 +267,7 @@ void createSphere(float radius, float numSides, float numStacks, ofVec3f center)
 	// Loop over each stack and side of the sphere and add the vertex
 	for (int i = 0; i <= numStacks; i++) {
 		for (int j = 0; j <= numSides; j++) {
-			std::vector<float> vertex = { radius,j * thetaStep, i * phiStep };
+			std::vector<float> vertex = { radius, j * thetaStep, i * phiStep };
 			mesh.addVertex(sphericalToCartesian(vertex) + center);
 		}
 	}
@@ -1188,10 +283,13 @@ void createSphere(float radius, float numSides, float numStacks, ofVec3f center)
 			mesh.addIndex(stackStart + j);
 			mesh.addIndex(nextStackStart + j);
 			mesh.addIndex(nextStackStart + j + 1);
+			//mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(stackStart + j), mesh.getVertex(nextStackStart + j)), findVector(mesh.getVertex(stackStart + j), mesh.getVertex(nextStackStart + j + 1)))));
 
 			mesh.addIndex(stackStart + j);
 			mesh.addIndex(nextStackStart + j + 1);
 			mesh.addIndex(stackStart + j + 1);
+			//mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(stackStart + j), mesh.getVertex(nextStackStart + j + 1)), findVector(mesh.getVertex(stackStart + j), mesh.getVertex(stackStart + j + 1)))));
+
 		}
 	}
 	
@@ -1205,6 +303,75 @@ void createSphere(float radius, float numSides, float numStacks, ofVec3f center)
 		for (float i = 0; i < 1; i += 1 / numSides) {
 			mesh.addTexCoord(ofVec2f(0 + i, 0 + j));
 		}
+	}
+}
+void thetaSinShiftSphere(float frequencyMultiplier, float amplitudeMultiplier) {
+	
+	//for (int i = 0; i < mesh.getNumVertices(); i++) {
+	//	mesh.setVertex(i, mesh.getVertex(i) + (mesh.getNormal(i)*ofRandom(10)));
+	//}
+
+	//find all the vertexs and keep in vector of original vertexs
+
+	//if a vertex is the same as one in the old array, make it equal to the new one of the one its equal to
+	/*std::vector<ofVec3f> OGVertices;
+	for (int i = 0; i < mesh.getNumVertices(); i++) {
+		OGVertices.push_back(mesh.getVertex(i));
+	}*/
+
+	//for (int i = 0; i < mesh.getNumVertices(); i++) {
+	//	//if mesh.getVertex(i) is in the OGVertices array excluding the value of ogVertices[i] in the array
+	//	//set the value to equal mesh.getVertex(i) of the new thingy
+
+	//	if (vectorContainsElementExcludingIndex(OGVertices, mesh.getVertex(i), i) == -1) {
+	//		mesh.setVertex(i, mesh.getVertex(i) + (mesh.getNormal(i) * 10));
+	//	}
+	//	else {
+	//		mesh.setVertex(i, mesh.getVertex(vectorContainsElementExcludingIndex(OGVertices, mesh.getVertex(i), i)));
+	//	}
+	//	
+	//}
+	
+	for (int i = 0; i < mesh.getNumVertices(); i++) {
+		ofPoint vertex = mesh.getVertex(i);
+		float theta = atan2(vertex.y, vertex.x);
+		mesh.setVertex(i, vertex + (mesh.getNormal(i) * amplitudeMultiplier *sin(theta * frequencyMultiplier)));
+	}
+
+}
+void phiSinShiftSphere(int frequencyMultiplier, int amplitudeMultiplier) {
+	for (int i = 0; i < mesh.getNumVertices(); i++) {
+		ofPoint vertex = mesh.getVertex(i);
+		float phi = acos(vertex.z / (sqrt((vertex.x * vertex.x) + (vertex.y * vertex.y) + (vertex.z * vertex.z)))); 
+		mesh.setVertex(i, vertex + (mesh.getNormal(i) * amplitudeMultiplier * sin(phi * frequencyMultiplier)));
+	}
+}
+void thetaCosShiftSphere(int frequencyMultiplier, int amplitudeMultiplier) {
+	for (int i = 0; i < mesh.getNumVertices(); i++) {
+		ofPoint vertex = mesh.getVertex(i);
+		float theta = atan2(vertex.y, vertex.x);
+		mesh.setVertex(i, vertex + (mesh.getNormal(i) * amplitudeMultiplier*cos(theta * frequencyMultiplier)));
+	}
+}
+void phiCosShiftSphere(int frequencyMultiplier, int amplitudeMultiplier) {
+	for (int i = 0; i < mesh.getNumVertices(); i++) {
+		ofPoint vertex = mesh.getVertex(i);
+		float phi = acos(vertex.z / (sqrt((vertex.x * vertex.x) + (vertex.y * vertex.y) + (vertex.z * vertex.z))));
+		mesh.setVertex(i, vertex + (mesh.getNormal(i) * amplitudeMultiplier *cos(phi * frequencyMultiplier)));
+	}
+}
+void thetaTanShiftSphere(int frequencyMultiplier, int amplitudeMultiplier) {
+	for (int i = 0; i < mesh.getNumVertices(); i++) {
+		ofPoint vertex = mesh.getVertex(i);
+		float theta = atan2(vertex.y, vertex.x);
+		mesh.setVertex(i, vertex + (mesh.getNormal(i) * amplitudeMultiplier * tan(theta * frequencyMultiplier)));
+	}
+}
+void phiTanShiftSphere(int frequencyMultiplier, int amplitudeMultiplier) {
+	for (int i = 0; i < mesh.getNumVertices(); i++) {
+		ofPoint vertex = mesh.getVertex(i);
+		float phi = acos(vertex.z / (sqrt((vertex.x * vertex.x) + (vertex.y * vertex.y) + (vertex.z * vertex.z))));
+		mesh.setVertex(i, vertex + (mesh.getNormal(i) * amplitudeMultiplier *tan(phi * frequencyMultiplier)));
 	}
 }
 void createDirectionalLight(ofVec3f lightVector, ofColor color) {
@@ -1252,497 +419,312 @@ void createDirectionalLight(ofVec3f lightVector, ofColor color) {
 
 
 }
-void diamondStep(float BL, float TR, float BR, float TL, float resolution, float maxChange) {
-	float num = floor((TR - TL) / 2);
-	float middle = (num * resolution) + BL + num;
-	ofPoint temp = mesh.getVertex(middle);
-	temp.z = ((mesh.getVertex(BL).z + mesh.getVertex(TR).z + mesh.getVertex(BR).z + mesh.getVertex(TL).z) / 4) + ofRandom(maxChange);
-	mesh.setVertex(middle, temp);
-}
-void squareStep(float BL, float TR, float BR, float TL, float resolution, float maxChange) {
-	float num = floor((TR - TL) / 2);
-	float LM = BL + (num * resolution);
-	float RM = BR + (num * resolution);
-	float TM = TL + num;
-	float BM = BL + num;
-	//middle left
-	ofPoint temp = mesh.getVertex(LM);
-	temp.z = ((mesh.getVertex(BL).z + mesh.getVertex(TR).z + mesh.getVertex(BR).z + mesh.getVertex(TL).z) / 4) + ofRandom(maxChange);
-	mesh.setVertex(LM, temp);
-	//middle right
-	temp = mesh.getVertex(RM);
-	temp.z = ((mesh.getVertex(BL).z + mesh.getVertex(TR).z + mesh.getVertex(BR).z + mesh.getVertex(TL).z) / 4) + ofRandom(maxChange);
-	mesh.setVertex(RM, temp);
-	//top middle
-	temp = mesh.getVertex(TM);
-	temp.z = ((mesh.getVertex(BL).z + mesh.getVertex(TR).z + mesh.getVertex(BR).z + mesh.getVertex(TL).z) / 4) + ofRandom(maxChange);
-	mesh.setVertex(TM, temp);
-	//bottom middle
-	temp = mesh.getVertex(BM);
-	temp.z = ((mesh.getVertex(BL).z + mesh.getVertex(TR).z + mesh.getVertex(BR).z + mesh.getVertex(TL).z) / 4) + ofRandom(maxChange);
-	mesh.setVertex(BM, temp);
-}
-void diamondSquare(float BL, float TR, float BR, float TL, float resolution, float maxChange) {
-	if (TR - TL < 2) {
-		return;
-	}
-	diamondStep(BL, TR, BR, TL, resolution, maxChange);
-	squareStep(BL, TR, BR, TL, resolution, maxChange);
-	//recursive call function for each small square
-	//BL,BM,LM,middle
-	//TL,TM,LM,middle
-	//TM,TR,middle,RM
-	//middle,MR,BM,BR
-	float num = floor((TR - TL) / 2);
-	float middle = (num * resolution) + BL + num;
-	float LM = BL + (num * resolution);
-	float RM = BR + (num * resolution);
-	float TM = TL + num;
-	float BM = BL + num;
-	diamondSquare(BL, middle, BM, LM, resolution, maxChange * 0.8);
-	diamondSquare(middle, TR, RM, TM, resolution, maxChange * 0.8);
-	diamondSquare(BM, RM, BR, middle, resolution, maxChange * 0.8);
-	diamondSquare(LM, TM, middle, TL, resolution, maxChange * 0.8);
-}
-void meshTerrain(float x, float y, float z, float width, float length, float maxChange, float resolution) {
-	//need to add a grid of points
-	float counter = 0;
-	for (int j = 0; j < length; j += length / resolution) {
-		for (int i = 0; i < width; i += width / resolution) {
-			mesh.addVertex(ofPoint(x + i, y + j, z));
-			//ofDrawBitmapString(counter, ofPoint(x + i, y + j, z + ofRandom(maxChange)));
-			counter++;
-		}
-	}
-	for (int j = 0; j < resolution - 1; j++) {
-		float offset = j * resolution;
-		for (int i = 0; i < resolution - 1; i++) {
-			mesh.addIndex(i + offset);
-			mesh.addIndex(i + offset + 1);
-			mesh.addIndex(i + offset + resolution);
-		}
-	}
-
-	for (int j = 0; j < resolution - 1; j++) {
-		float offset = j * resolution;
-		for (int i = 0; i < resolution - 1; i++) {
-			mesh.addIndex(i + offset + 1);
-			mesh.addIndex(i + offset + resolution + 1);
-			mesh.addIndex(i + offset + resolution);
-		}
-	}
-
-	//diamondSquare shenanigans
-	//maxChange = 100;
-	//setting first point to random height
-
-	float BL = 0;
-	float TR = mesh.getNumVertices() - 1;
-	float BR = resolution - 1;
-	float TL = mesh.getNumVertices() - resolution;
-	mesh.setVertex(BL, ofPoint(mesh.getVertex(BL).x,mesh.getVertex(BL).y,mesh.getVertex(BL).z+ofRandom(maxChange)));
-	//setting the last point to a random height
-	mesh.setVertex(TR, ofPoint(mesh.getVertex(TR).x, mesh.getVertex(TR).y, mesh.getVertex(TR).z + ofRandom(maxChange)));
-	//setting the bottom right point to a random height
-	mesh.setVertex(BR, ofPoint(mesh.getVertex(BR).x, mesh.getVertex(BR).y, mesh.getVertex(BR).z + ofRandom(maxChange)));
-	//setting the top left to a random height
-	mesh.setVertex(TL, ofPoint(mesh.getVertex(TL).x, mesh.getVertex(TL).y, mesh.getVertex(TL).z + ofRandom(maxChange)));
-
-	diamondSquare(BL,TR,BR,TL,resolution,maxChange);
-
-	for (int j = 0; j < resolution -1; j++) {
-		float offset = j * resolution;
-		for (int i = 0; i < resolution -1; i++) {
-			mesh.addNormal(20 * normalize(crossProduct(findVector(mesh.getVertex(i + offset), mesh.getVertex(i + offset + 1)), findVector(mesh.getVertex(i + offset), mesh.getVertex(i + offset + resolution)))));
-		}
-		mesh.addNormal(20 * normalize(crossProduct(findVector(mesh.getVertex(resolution + offset -1), mesh.getVertex(resolution + resolution + offset - 2)), findVector(mesh.getVertex(resolution + offset - 1), mesh.getVertex(resolution + offset - 2)))));
-	}
-
-	for (int i = (resolution -1)*resolution; i < (resolution*resolution)-1; i++) {
-		mesh.addNormal(20 * normalize(crossProduct(findVector(mesh.getVertex(i), mesh.getVertex(i-resolution)), findVector(mesh.getVertex(i), mesh.getVertex(i-resolution+1)))));
-	}
-	mesh.addNormal(20 * normalize(crossProduct(findVector(mesh.getVertex((resolution * resolution) - 1), mesh.getVertex((resolution * resolution) - 1 -1)), findVector(mesh.getVertex((resolution * resolution) - 1), mesh.getVertex((resolution * resolution) - 1)))));
-
-	for (float j = 0; j < 1; j += 1 / resolution) {
-		for (float i = 0; i < 1; i += 1 / resolution) {
-			mesh.addTexCoord(ofVec2f(0 + i, 0 + j));
-		}
-	}
-}
-ofPoint midpoint3d(float x1,float y1,float z1,float x2,float y2,float z2) {
-	ofPoint output;
-
-	//(x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2
-	output.x = (x1 + x2) / 2;
-	output.y = (y1 + y2) / 2;
-	output.z = (z1 + z2) / 2;
-
-	return output;
-}
-void fractalMountain(float x1,float y1,float z1, float x2, float y2, float z2, float x3, float y3, float z3, float resolution, float maxHeight) {
-	if (resolution == 0) {
-	/*	for (int i = 0; i < mesh.getNumVertices(); i++) {
-			float random1 = ofRandom(maxHeight);
-			if (random1 > (maxHeight / 2)) {
-				random1 -= maxHeight;
-			}
-			mesh.setVertex(i, ofVec3f(mesh.getVertex(i).x, mesh.getVertex(i).y, mesh.getVertex(i).z + ofRandom(random1)));
-		}*/
-		return;
-	}
-	//draws the triangle//
-	ofColor randCol;
-	randCol.r = ofRandom(255);
-	randCol.g = ofRandom(255);
-	randCol.b = ofRandom(255);
-	mesh.addVertex(ofPoint(x1, y1, z1));
-	mesh.addIndex(mesh.getNumVertices() - 1);
-	mesh.addColor(randCol);
-	mesh.addVertex(ofPoint(x2, y2, z2));
-	mesh.addIndex(mesh.getNumVertices() - 1);
-	mesh.addColor(randCol);
-	mesh.addVertex(ofPoint(x3, y3, z3));
-	mesh.addIndex(mesh.getNumVertices() - 1);
-	mesh.addColor(randCol);
-	/////////////////////////
-	//if (mesh.getNumVertices() > 3) {
-	//	mesh.addIndex(mesh.getNumVertices());
-	//	mesh.addIndex(mesh.getNumVertices());
-	//	mesh.addIndex(mesh.getNumVertices());
-	//	mesh.addColor(randCol);
-	//	mesh.addIndex(mesh.getNumVertices());
-	//	mesh.addIndex(mesh.getNumVertices());
-	//	mesh.addIndex(mesh.getNumVertices());
-	//	mesh.addColor(randCol);
-	//	mesh.addIndex(mesh.getNumVertices());
-	//	mesh.addIndex(mesh.getNumVertices());
-	//	mesh.addIndex(mesh.getNumVertices());
-	//	mesh.addColor(randCol);
-	//}
-	resolution--;
-	ofPoint mid1 = midpoint3d(x1, y1, z1, x2, y2, z2);
-	//mesh.addVertex(mid1);
-	//mesh.addIndex(mesh.getNumVertices() - 6);
-	//mesh.addIndex(mesh.getNumVertices() - 5);
-	//mesh.addIndex(mesh.getNumVertices() - 1);
-	//mesh.addColor(randCol);
-	ofPoint mid2 = midpoint3d(x2, y2, z2, x3, y3, z3);
-	//mesh.addVertex(mid2);
-	//mesh.addIndex(mesh.getNumVertices() - 5);
-	//mesh.addIndex(mesh.getNumVertices() - 6);
-	//mesh.addIndex(mesh.getNumVertices() - 1);
-	//mesh.addColor(randCol);
-	ofPoint mid3 = midpoint3d(x1, y1, z1, x3, y3, z3);
-	//mesh.addVertex(mid3);
-	//mesh.addIndex(mesh.getNumVertices() - 6);
-	//mesh.addIndex(mesh.getNumVertices() - 4);
-	//mesh.addIndex(mesh.getNumVertices() - 1);
-	//mesh.addColor(randCol);
-	////////////=============////////////////==============//////////
-	//add midpoint to each point around it as a index
-	////////////===========//////////////////==============//////////
-
-	//float random1 = ofRandom(maxHeight);
-	//if (random1 > (maxHeight/2)) {
-	//	random1 -= maxHeight;
-	//}
-	//mid1.z += random1;
-
-	//float random2 = ofRandom(maxHeight);
-	//if (random2 > (maxHeight / 2)) {
-	//	random2 -= maxHeight;
-	//}
-	//mid2.z += random2;
-
-	//float random3 = ofRandom(maxHeight);
-	//if (random3 > (maxHeight / 2)) {
-	//	random3 -= maxHeight;
-	//}
-	//mid3.z += random3;
-
-	maxHeight = maxHeight * 0.5;
-	fractalMountain(mid1.x, mid1.y, mid1.z, mid2.x, mid2.y, mid2.z, mid3.x, mid3.y, mid3.z, resolution, maxHeight);
-	fractalMountain(mid1.x, mid1.y, mid1.z, x2,y2,z2, mid2.x, mid2.y, mid2.z, resolution, maxHeight);
-	fractalMountain(x1, y1, z1, mid1.x, mid1.y, mid1.z, mid3.x, mid3.y, mid3.z, resolution, maxHeight);
-	fractalMountain(mid3.x, mid3.y, mid3.z, mid2.x, mid2.y, mid2.z, x3, y3, z3, resolution, maxHeight);
-
-	//plan to do all of the randomness after?
-	//also need to change code to do one whole thing at once then recurse i think maybe? would be very hard 
-}
-void fractalMountain2ElectricBoogaloo(float x1, float y1, float z1,float width, float length, float resolution, float maxHeight) {
+void createAmbientLight(ofColor color) {
 	glEnable(GL_DEPTH_TEST);
-	for (int j = 0; j < length; j += length / resolution) {
-		x1 += (length / resolution);
-		for (int i = 0; i < width; i += width / resolution) {
-			mesh.addVertex(ofPoint(x1 + i, y1 + j, z1));
-		}
+	for (int i = 0; i < mesh.getNumNormals(); i++) {
+		mesh.addColor(color);
 	}
-
-	for (int j = 0; j < resolution - 1; j++) {
-		float offset = j * resolution;
-		for (int i = 0; i < resolution - 1; i++) {
-			mesh.addIndex(i + offset);
-			mesh.addIndex(i + offset + 1);
-			mesh.addIndex(i + offset + resolution);
+}
+void drawNormals() {
+	ofSetColor(ofColor(255, 0, 0));
+for (int i = 0; i < mesh.getNumNormals(); i++) {
+	ofDrawLine(mesh.getVertex(i), ofPoint(mesh.getVertex(i).x + mesh.getNormal(i).x, mesh.getVertex(i).y + mesh.getNormal(i).y, mesh.getVertex(i).z + mesh.getNormal(i).z));
+}
+ofSetColor(ofColor(255, 255, 255));
+}
+void recalculateTorusNormals(float num) {
+	mesh.clearNormals();
+	for (int j = 0; j < num - 1; j++) {
+		float offset = j * num;
+		for (int i = 0; i < num - 1; i++) {
+			mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(i + offset), mesh.getVertex(i + 1 + offset)), findVector(mesh.getVertex(i + offset), mesh.getVertex(i + num + offset)))));
 		}
+		mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(0 + offset), mesh.getVertex((num - 1) + num + offset)), findVector(mesh.getVertex(0 + offset), mesh.getVertex(num - 1 + offset)))));
 	}
-
-	for (int j = 0; j < resolution - 1; j++) {
-		float offset = j * resolution;
-		for (int i = 0; i < resolution - 1; i++) {
-			mesh.addIndex(i + offset + 1);
-			mesh.addIndex(i + offset + resolution + 1);
-			mesh.addIndex(i + offset + resolution);
-		}
+	for (int i = 0; i < num - 1; i++) {
+		mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(i), mesh.getVertex(i + (num * (num - 1)) + 1)), findVector(mesh.getVertex(i), mesh.getVertex(i + 1)))));
 	}
-	float temp = ofRandom(mesh.getNumVertices());
-	mesh.setVertex(((resolution/4)*(resolution/4)), ofVec3f(mesh.getVertex(((resolution / 4) * (resolution / 4))).x, mesh.getVertex(((resolution / 4) * (resolution / 4))).y, mesh.getVertex(((resolution / 4) * (resolution / 4))).z + maxHeight+3));
+	mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(0), mesh.getVertex(num - 1)), findVector(mesh.getVertex(0), mesh.getVertex((num - 1) * num)))));
+}
+void recalculateSphereNormals() {
+	mesh.clearNormals();
+	for (int i = 0; i < mesh.getNumIndices(); i+=6) {
+		//i
+		//i+1
+		//i+2
+		ofVec3f temp1 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex(i)), mesh.getVertex(mesh.getIndex(i+1))), findVector(mesh.getVertex(mesh.getIndex(i)), mesh.getVertex(mesh.getIndex(i+2)))));
 
-	temp = ofRandom(mesh.getNumVertices());
-	mesh.setVertex(((resolution / 2) * (resolution / 2)), ofVec3f(mesh.getVertex(((resolution / 2) * (resolution / 2))).x, mesh.getVertex(((resolution / 2) * (resolution / 2))).y, mesh.getVertex(((resolution / 2) * (resolution / 2))).z - maxHeight*1.5));
 
-		for (int i = 1; i < mesh.getNumVertices()-resolution; i++) {
-		float random1 = ofRandom(maxHeight);
-		if (random1 > (maxHeight / 2)) {
-			random1 -= maxHeight/2;
-		}
-		//maxHeight = maxHeight * 0.9;
-		mesh.setVertex(i, ofVec3f(mesh.getVertex(i).x, mesh.getVertex(i).y, (mesh.getVertex(i-1).z+mesh.getVertex(i+resolution).z+mesh.getVertex(i).z)/3 + ofRandom(random1)));
+		//i+3
+		//i+4
+		//i+5
+		ofVec3f temp2 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex(i+4)), mesh.getVertex(mesh.getIndex(i+3))), findVector(mesh.getVertex(mesh.getIndex(i+5)), mesh.getVertex(mesh.getIndex(i+3)))));
+
+		temp1 += temp2;
+		temp1 /= 2;
+		mesh.addNormal(10* temp1);
 	}
-
-		for (int i = mesh.getNumVertices() - resolution; i < mesh.getNumVertices(); i++) {
-			float random1 = ofRandom(maxHeight);
-			if (random1 > (maxHeight / 2)) {
-				random1 -= maxHeight / 2;
-			}
-			mesh.setVertex(i, ofVec3f(mesh.getVertex(i).x, mesh.getVertex(i).y, (mesh.getVertex(i - 1).z + mesh.getVertex(i - resolution).z + mesh.getVertex(i).z) / 3 + ofRandom(random1)));
-		}
-
-		for (int i = 0; i < mesh.getNumVertices()-2; i++) {
-			ofColor randCol;
-			randCol.r = ofRandom(255);
-			randCol.g = ofRandom(255);
-			randCol.b = ofRandom(255);
-			mesh.addColor(randCol);
-			mesh.addColor(randCol);
-			mesh.addColor(randCol);
-		}
-		
-
 }
 //===============================================================================//
 void ofApp::setup(){
 	gui.setup();
+	directionalLightGui.setup();
+	ambientLightGui.setup();
+	shiftGui.setup();
+	sinShiftGui.setup();
+	cosShiftGui.setup();
+	tanShiftGui.setup();
+	gui.setSize(ofGetWidth() / 2, ofGetHeight() / 2);
 
-	gui.setSize(ofGetWidth() / 4, ofGetHeight() / 2);
+	
+	gui.add(sphereToggle.setup("Sphere", true));
+	gui.add(torusToggle.setup("Torus", false));
 
-	gui.add(intSlider.setup("int slider", 64, 3, 64));
-	gui.add(floatSlider.setup("float slider", 30.0, 0.0, 300.0));
+	gui.add(radius.setup("Radius", 100, 10, 1000));
+	gui.add(numSides.setup("Num sides", 100, 3, 100));
+	gui.add(numStacks.setup("Num stacks", 100, 3, 100));
+	gui.add(originSlider.setup("Origin", ofVec3f(0, 0, 0), ofVec3f(-1000, -1000, -1000), ofVec3f(1000, 1000, 1000)));
 
-	gui.add(toggle.setup("toggle", false));
-	gui.add(button.setup("button"));
-	gui.add(label.setup("label", "this is a label"));
+	gui.add(sidesAnimationToggle.setup("Number of Sides Animation", false));
 
-	gui.add(intField.setup("int field", 100, 0, 100));
-	gui.add(floatField.setup("float field", 100.0, 0.0, 100.0));
-	gui.add(textField.setup("text field", "text"));
+	gui.add(directionalLightToggle.setup("Add Directional light", true));
 
-	gui.add(vec2Slider.setup("vec2 slider", ofVec2f(0, 0), ofVec2f(0, 0), ofVec2f(ofGetWidth(), ofGetHeight())));
-	gui.add(vec3Slider.setup("vec3 slider", ofVec3f(100, 150, 90), ofVec3f(0, 0, 0), ofVec3f(255, 255, 255)));
-	gui.add(vec4Slider.setup("vec4 slider", ofVec4f(0, 0, 0, 0), ofVec4f(0, 0, 0, 0), ofVec4f(255, 255, 255, 255)));
+	gui.add(ambientLightToggle.setup("Add Ambient light", false));
 
+	gui.add(normalsToggle.setup("Normals", false));
+
+	gui.add(drawWireframeToggle.setup("WireFrame", false));
+	gui.add(drawToggle.setup("Draw", true));
+
+	gui.add(shiftToggle.setup("Shifts", false));
+
+	directionalLightGui.add(colourForDirectionalLight.setup("Colour", ofVec3f(180, 0, 100), ofVec3f(0, 0, 0), ofVec3f(255, 255, 255)));
+	directionalLightGui.add(vectorForDirectionalLight.setup("Vector", ofVec3f(0, 0, 10), ofVec3f(0, 0, 0), ofVec3f(200, 200, 200)));
+
+	ambientLightGui.add(colourForAmbientLight.setup("Colour", ofVec3f(0, 0, 0), ofVec3f(0, 0, 0), ofVec3f(255, 255, 255)));
+
+	shiftGui.add(sinToggle.setup("Sin Shifts", false));
+	shiftGui.add(cosToggle.setup("Cos Shifts", false));
+	shiftGui.add(tanToggle.setup("Tan Shifts", false));
+
+	sinShiftGui.add(thetaSinShiftLabel.setup("Theta Sin Shift", ""));
+	sinShiftGui.add(thetaSinShiftToggle.setup("Theta Sin Shift", false));
+	sinShiftGui.add(thetaSinFrequencySlider.setup("Frequency Multiplier", 10, 0, 100));
+	sinShiftGui.add(thetaSinAmplitudeSlider.setup("Amplitude Multiplier", 1, 0, 100));
+	sinShiftGui.add(thetaSinAnimation.setup("Theta Sin Shift Animation", false));
+
+	sinShiftGui.add(phiSinShiftLabel.setup("Phi Sin Shift", ""));
+	sinShiftGui.add(phiSinShiftToggle.setup("Phi Sin Shift", false));
+	sinShiftGui.add(phiSinFrequencySlider.setup("Frequency Multiplier", 10, 0, 100));
+	sinShiftGui.add(phiSinAmplitudeSlider.setup("Amplitude Multiplier", 1, 0, 100));
+	sinShiftGui.add(phiSinAnimation.setup("Phi Sin Shift Animation", false));
+
+	cosShiftGui.add(thetaCosShiftLabel.setup("Theta Cos Shift", ""));
+	cosShiftGui.add(thetaCosShiftToggle.setup("Theta Cos Shift", false));
+	cosShiftGui.add(thetaCosFrequencySlider.setup("Frequency Multiplier", 10, 0, 100));
+	sinShiftGui.add(thetaCosAmplitudeSlider.setup("Amplitude Multiplier", 1, 0, 100));
+	cosShiftGui.add(thetaCosAnimation.setup("Theta Cos Shift Animation", false));
+
+	cosShiftGui.add(phiCosShiftLabel.setup("Phi Cos Shift", ""));
+	cosShiftGui.add(phiCosShiftToggle.setup("Phi Cos Shift", false));
+	cosShiftGui.add(phiCosFrequencySlider.setup("Frequency Multiplier", 10, 0, 100));
+	sinShiftGui.add(phiCosAmplitudeSlider.setup("Amplitude Multiplier", 1, 0, 100));
+	cosShiftGui.add(phiCosAnimation.setup("Phi Cos Shift Animation", false));
+
+	tanShiftGui.add(thetaTanShiftlabel.setup("Theta Tan Shift", ""));
+	tanShiftGui.add(thetaTanShiftToggle.setup("Theta Tan Shift", false));
+	tanShiftGui.add(thetaTanFrequencySlider.setup("Frequency Multiplier", 10, 0, 100));
+	sinShiftGui.add(thetaTanAmplitudeSlider.setup("Amplitude Multiplier", 1, 0, 100));
+	tanShiftGui.add(thetaTanAnimation.setup("Theta Tan Shift Animation", false));
+
+	tanShiftGui.add(phiTanShiftlabel.setup("Phi Tan Shift", ""));
+	tanShiftGui.add(phiTanShiftToggle.setup("Phi Tan Shift", false));
+	tanShiftGui.add(phiTanFrequencySlider.setup("Frequency Multiplier", 10, 0, 100));
+	sinShiftGui.add(phiTanAmplitudeSlider.setup("Amplitude Multiplier", 1, 0, 100));
+	tanShiftGui.add(phiTanAnimation.setup("Phi Tan Shift Animation", false));
+
+
+	glPointSize(4);
 	ofDisableAlphaBlending();
 	ofEnableDepthTest();
 	ofDisableArbTex();
 	ofLoadImage(mTex, "sprinkles.png");
-	// 
-	//drawSphereWithMesh(0, 0, 0, 100, 18);
-	glPointSize(4);
-	//drawSphereWithMeshSetup(0, 0, 0, 100, 16);
-	//drawTorusWithMeshSetup(0, 0, 0, 100, 200, 240);
-	//createDirectionalLight(ofVec3f(0,1,1),ofColor(255, 180, 128));
-	/*
-	ofLog() << "vertices:" << mesh.getNumVertices(); 
-	for (int i = 0; i < mesh.getNumIndices(); i++) {
-		ofLog() << mesh.getIndex(i);
-	}
-	*/
-	//meshTerrain(-50, -50, 0, 100, 100, 5, 20);
-
-	//-1000,-500,0
-	//0,500,0
-	//1000,-500,0
-	//fractalMountain(-1000, -500, 0, 0, 500, 0, 1000, -500, 0, 4, 1000);
-	//fractalMountain2ElectricBoogaloo(-1000, -500, 0, 2000, 1000, 40, 200);
-	//meshTerrain(-2450, -2450, 0, 4900, 4900, 500, 49);
-	//meshTerrain(-450, -450, 0, 900, 900, 100, 9);
-	
-	createSphere(100.0, 40, 40, ofVec3f(0, 0, 0));
-
-
-
-	createDirectionalLight(ofVec3f(0,1,1),ofColor(178, 190, 181));
 }	
-
 //--------------------------------------------------------------
 void ofApp::update(){
-	
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-
-	//if (button) {
-	//	ofSetColor(ofRandom(vec3Slider->x), (vec3Slider->y), (vec3Slider->z));
-	//}
-	//ofDrawCircle(ofGetWidth() / 2, ofGetHeight() / 2, 128);
-
-	//ofSetCircleResolution(intSlider);
-	//ofSetColor(vec4Slider->x, vec4Slider->y, vec4Slider->z, vec4Slider->w);
-	//ofDrawCircle(vec2Slider->x, vec2Slider->y, 128);
+	//ofLog() << ofGetFrameNum();
+	//ofLog() << ofGetFrameRate();
 
 	ofDisableDepthTest();
 	gui.draw();
+
+	if (directionalLightToggle) {
+		directionalLightGui.draw();
+	}
+	if (ambientLightToggle) {
+		ambientLightGui.draw();
+	}
+	if (shiftToggle) {
+		shiftGui.draw();
+		if (sinToggle) {
+			sinShiftGui.draw();
+		}
+		if (cosToggle) {
+			cosShiftGui.draw();
+		}
+		if (tanToggle) {
+			tanShiftGui.draw();
+		}
+	}
 	ofEnableDepthTest();
 
 	cam.begin();
-	mTex.bind();
+	//mTex.bind();
 	ofNoFill();
-	
-
-	//ofLight light;
-	//light.setPosition(0, 0, 0);
-	//light.enable();
-	//drawLineUsingFormula(64, 64, 128, 256);
-	//drawSquareRotationOrigin(300, 300, 64, 0);
-	//drawSquareRotationOrigin(600, 300, 64, 0);
-	//drawSquareRotationOrigin(600, 300, 64, 45);
-	//300,300 364,300
-	//DrawSquareRotationArbitrary(600, 300, 64, 45,64,64);
-	//765
-	//dot(0, 765);
-	//dot(1, 765);
-	//dot(0.5, 654);
-
-	//drawEqualatralTriangle(128, 128, 60);
-	//drawLineUsingFormula(64, 64, 74, 64);
-	//drawLineUsingFormula(64, 64, 69, 64 - 8.66);
-	//drawLineUsingFormula(74, 64, 69, 64 - 8.66);
-
-	//drawLineUsingFormula(128, 128, 178, 128);
-	//drawLineUsingFormula(128, 128, 153, 128 - 43.3);
-	//drawLineUsingFormula(178, 128, 153, 128 - 43.3);
-
-	//sepinski(0,765,765,765, 382.5, 765 - sqrt((765 * 765) - ((765 / 2) * (765 / 2))),3);
-	//sepinski(10,750,700,750,300,500,10);
-	//float value = 2220;
-	//float offset = 500;
-	//sepinski(offset, value - (offset/2), value + offset, value - (offset / 2), value / 2 + offset, value - sqrt((value * value) - ((value / 2) * (value / 2))) - (offset / 2), 8);
-
-	//drawCircle(300,300,50);
-	
-	//drawCylinder(300, 300, 50, 300,500);
-
-	//drawCone(300, 300, 50, 500, 400);
-	
-	//drawpyramid(300, 300, 50, 500, 400);
-	//testing3D();
-	//ofNoFill();
-	//ofDrawSphere(64);
-	//ofDrawCircle(0,0,72);
-	//ofRotateXDeg(rotate);
-
-	//drawCylinderWithStackedCircles(64, 64, 100, 400, "horizontal");
-
-	
-	//drawMeshCube(0, 0, 0, 100);
-
-	//drawCircleWithMesh(0,0,0,100,20);
-
-	//drawCylinderWithMesh(0, 0, 0, 100, 15, 300);
-	
-	//drawSphereWithMesh(0, 0, 0, 100,24);
-	//drawTorusWithMeshSetup(0, 0, 0, 100, 200, 24);
-		
-	//mesh.drawWireframe();
-
-	/*for (int i = 0; i < mesh.getNumVertices(); i++) {
-		ofDrawBitmapString(i, mesh.getVertex(i));
-	}*/
-
-	/*mesh.drawVertices();*/
 
 
-	
-	mesh.draw();
-
-	//sphere.draw();
-	//ofSetColor(ofColor(255, 0, 0));
-	//for (int i = 0; i < mesh.getNumVertices(); i++) {
-	//	ofDrawLine(mesh.getVertex(i), ofPoint(mesh.getVertex(i).x + mesh.getNormal(i).x, mesh.getVertex(i).y + mesh.getNormal(i).y, mesh.getVertex(i).z + mesh.getNormal(i).z));
-	//}
-	//ofSetColor(ofColor(255, 255, 255));
-	//for (int i = 0; i < mesh.getNumVertices(); i++) {
-	//	ofDrawBitmapString(i, mesh.getVertex(i));
-	//}
-	//drawSphereWithMeshSetup(0, 0, 0, 100, 12);
-	//meshTerrain(0, 0, 0, 100, 100, 20, 10);
-	 
-	mTex.unbind();
+	mesh.clear();
+	if (sphereToggle) {
+		if (sidesAnimationToggle) {
+			int tens = (tickyTocky / 10) % 10; // get the tens digit
+			int hundreds = (tickyTocky / 100) % 10; // get the hundreds digit
+			numSides = tens + (hundreds * 10);
+			numStacks = tens + (hundreds * 10);
+			if (numSides < 3) {
+				numSides = 3;
+			}
+			if (numStacks < 3) { 
+				numStacks = 3;
+			}
+		}
+		drawSphere(radius, numSides, numStacks, ofVec3f(originSlider->x, originSlider->y, originSlider->z));
+	}
+	if (torusToggle) {
+		if (sidesAnimationToggle) {
+			int tens = (tickyTocky / 10) % 10; // get the tens digit
+			int hundreds = (tickyTocky / 100) % 10; // get the hundreds digit
+			numSides = tens + (hundreds * 10);
+			numStacks = tens + (hundreds * 10);
+			if (numSides < 3) {
+				numSides = 3;
+			}
+			if (numStacks < 3) {
+				numStacks = 3;
+			}
+		}
+		drawTorusWithMeshSetup(originSlider->x, originSlider->y, originSlider->z, radius, radius * 2, numSides);
+	}
+	if (directionalLightToggle) {
+		createDirectionalLight(ofVec3f(vectorForDirectionalLight->x / 10, vectorForDirectionalLight->y / 10, vectorForDirectionalLight->z / 10), ofColor(colourForDirectionalLight->x, colourForDirectionalLight->y, colourForDirectionalLight->z));
+	}
+	if (ambientLightToggle) {
+		createAmbientLight(ofColor(colourForAmbientLight->x, colourForAmbientLight->y, colourForAmbientLight->z));
+	}
+	if (shiftToggle) {
+		if (thetaTanShiftToggle) {
+			if (thetaTanAnimation) {
+				thetaTanShiftSphere(thetaTanFrequencySlider + ofGetFrameNum(), thetaTanAmplitudeSlider);
+			}
+			else {
+				thetaTanShiftSphere(thetaTanFrequencySlider, thetaTanAmplitudeSlider);
+			}
+		}
+		if (phiTanShiftToggle) {
+			if (phiTanAnimation) {
+				thetaTanShiftSphere(phiTanFrequencySlider + ofGetFrameNum(), phiTanAmplitudeSlider);
+			}
+			else {
+				thetaTanShiftSphere(phiTanFrequencySlider, phiTanAmplitudeSlider);
+			}
+		}
+		if (thetaCosShiftToggle) {
+			if (thetaCosAnimation) {
+				thetaCosShiftSphere(thetaCosFrequencySlider + ofGetFrameNum(), thetaCosAmplitudeSlider);
+			}
+			else {
+				thetaCosShiftSphere(thetaCosFrequencySlider, thetaCosAmplitudeSlider);
+			}
+		}
+		if (phiCosShiftToggle) {
+			if (phiCosAnimation) {
+				phiCosShiftSphere(phiCosFrequencySlider + ofGetFrameNum(), phiCosAmplitudeSlider);
+			}
+			else {
+				phiCosShiftSphere(phiCosFrequencySlider, phiCosAmplitudeSlider);
+			}
+		}
+		if (thetaSinShiftToggle) {
+			if (thetaSinAnimation) {
+				thetaSinShiftSphere(thetaSinFrequencySlider + ofGetFrameNum(), thetaSinAmplitudeSlider);
+			}
+			else {
+				thetaSinShiftSphere(thetaSinFrequencySlider, thetaSinAmplitudeSlider);
+			}
+		}
+		if (phiSinShiftToggle) {
+			if (phiSinAnimation) {
+				phiSinShiftSphere(phiSinFrequencySlider + ofGetFrameNum(), phiSinFrequencySlider);
+			}
+			else {
+				phiSinShiftSphere(phiSinFrequencySlider, phiSinAmplitudeSlider);
+			}
+		}
+	}
+	if (sphereToggle) {
+		recalculateSphereNormals();
+	}
+	if (torusToggle) {
+		recalculateTorusNormals(numSides);
+	}
+	if (drawWireframeToggle) {
+		mesh.drawWireframe();
+	}
+	if (drawToggle) {
+		mesh.draw();
+	}
+	if (normalsToggle) {
+		drawNormals();
+	}
+	//mTex.unbind();
 	cam.end();
+	tickyTocky++;
+	tickyTocky++;
 }
 
 //--------------------------------------------------------------
-void ofApp::keyPressed(int key){
-	
+void ofApp::keyPressed(int key){	
 }
-
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-
 }
-
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y ){
-
 }
-
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-
 }
-
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-
 }
-
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-
 }
-
 //--------------------------------------------------------------
 void ofApp::mouseEntered(int x, int y){
-
 }
-
 //--------------------------------------------------------------
 void ofApp::mouseExited(int x, int y){
-
 }
-
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-
 }
-
 //--------------------------------------------------------------
 void ofApp::gotMessage(ofMessage msg){
-
 }
-
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
-
 }

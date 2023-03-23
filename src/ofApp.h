@@ -28,19 +28,79 @@ class ofApp : public ofBaseApp{
 		ofLight light;
 
 		ofxPanel gui;
+		ofxPanel torusGui;
+		ofxPanel sphereGui;
+		ofxPanel directionalLightGui;
+		ofxPanel ambientLightGui;
+		ofxPanel shiftGui;
+		ofxPanel sinShiftGui;
+		ofxPanel cosShiftGui;
+		ofxPanel tanShiftGui;
 
-		ofxIntSlider intSlider;
-		ofxFloatSlider floatSlider;
+		ofxIntSlider thetaSinAmplitudeSlider;
+		ofxIntSlider phiSinAmplitudeSlider;
+		ofxIntSlider thetaCosAmplitudeSlider;
+		ofxIntSlider phiCosAmplitudeSlider;
+		ofxIntSlider thetaTanAmplitudeSlider;
+		ofxIntSlider phiTanAmplitudeSlider;
+		ofxIntSlider thetaSinFrequencySlider;
+		ofxIntSlider phiSinFrequencySlider;
+		ofxIntSlider thetaCosFrequencySlider;
+		ofxIntSlider phiCosFrequencySlider;
+		ofxIntSlider thetaTanFrequencySlider;
+		ofxIntSlider phiTanFrequencySlider;
 
-		ofxToggle toggle;
-		ofxButton button;
-		ofxLabel label;
+		ofxToggle sphereToggle;
+		ofxToggle torusToggle;
 
-		ofxIntField intField;
-		ofxFloatField floatField;
-		ofxTextField textField;
+		ofxToggle sidesAnimationToggle;
 
-		ofxVec2Slider vec2Slider;
-		ofxVec3Slider vec3Slider;
-		ofxVec4Slider vec4Slider;
+		ofxToggle drawWireframeToggle;
+		ofxToggle drawToggle;
+		ofxToggle normalsToggle;
+
+		ofxToggle shiftToggle;
+
+		ofxToggle thetaSinShiftToggle;
+		ofxToggle phiSinShiftToggle;
+		ofxToggle thetaSinAnimation;
+		ofxToggle phiSinAnimation;
+
+		ofxToggle thetaCosShiftToggle;
+		ofxToggle phiCosShiftToggle;
+		ofxToggle thetaCosAnimation;
+		ofxToggle phiCosAnimation;
+
+		ofxToggle thetaTanShiftToggle;
+		ofxToggle phiTanShiftToggle;
+		ofxToggle thetaTanAnimation;
+		ofxToggle phiTanAnimation;
+
+		ofxToggle directionalLightToggle;
+		ofxToggle ambientLightToggle;
+
+		ofxToggle sinToggle;
+		ofxToggle cosToggle;
+		ofxToggle tanToggle;
+
+
+		ofxLabel normalsLabel;
+		ofxLabel shiftLabel;
+		ofxLabel thetaSinShiftLabel;
+		ofxLabel phiSinShiftLabel;
+		ofxLabel thetaCosShiftLabel;
+		ofxLabel phiCosShiftLabel;
+		ofxLabel thetaTanShiftlabel;
+		ofxLabel phiTanShiftlabel;
+		ofxLabel directionalLightLabel;
+		ofxLabel ambientLightLabel;
+
+		ofxIntField radius;
+		ofxIntField numSides;
+		ofxIntField numStacks;
+
+		ofxVec3Slider originSlider;
+		ofxVec3Slider colourForDirectionalLight;
+		ofxVec3Slider vectorForDirectionalLight;
+		ofxVec3Slider colourForAmbientLight;
 };
