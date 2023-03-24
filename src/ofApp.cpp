@@ -5,6 +5,20 @@
 #include <ctime>    // for time
 ofMesh mesh;
 int tickyTocky = 0;
+float thetaChange = 0;
+float phiChange = 0;
+std::pair<float, float> getRotateCoords(float x1, float y1, float rotation) {
+	//rotation formula for coords is 
+// newX = oldX*cos(clockwise rotation angle) - oldY*sin(clockwise rotation angle)
+// newY = oldY*cos(clockwise rotation angle) + oldX*sin(clockwise rotation angle)
+	float newX = x1 * cos(rotation) - y1 * sin(rotation);
+	float newY = y1 * cos(rotation) + x1 * sin(rotation);
+	return std::pair<float, float>(newX, newY);
+}
+std::pair<float, float> getDegreesRotation(float h, float k, float x1, float y1, float rotation) {
+	auto newCoords = getRotateCoords(x1 - h, y1 - k, rotation * (acos(-1) / 180));
+	return std::pair<float, float>(newCoords.first + h, newCoords.second + k);
+}
 ofPoint sphericalToCartesian(std::vector<float> input) {
 	ofPoint output;
 	float rho = input[0];
@@ -305,6 +319,7 @@ void drawSphere(float radius, float numSides, float numStacks, ofVec3f center) {
 		}
 	}
 }
+// draw cube i guess
 void thetaSinShiftSphere(float frequencyMultiplier, float amplitudeMultiplier) {
 	
 	//for (int i = 0; i < mesh.getNumVertices(); i++) {
@@ -376,35 +391,6 @@ void phiTanShiftSphere(int frequencyMultiplier, int amplitudeMultiplier) {
 }
 void createDirectionalLight(ofVec3f lightVector, ofColor color) {
 	glEnable(GL_DEPTH_TEST);
-	//random colour test
-	/*for (int i = 0; i < mesh.getNumVertices() / 3; i++) {
-		mesh.addColor(ofColor(ofRandom(255), ofRandom(255), ofRandom(255)));
-		mesh.addColor(ofColor(ofRandom(255), ofRandom(255), ofRandom(255)));
-		mesh.addColor(ofColor(ofRandom(255), ofRandom(255), ofRandom(255)));
-
-	}*/
-
-	//possibly change it so that as long as its less than 90 then you reduce the colour values by that percentage
-	//for (int i = 0; i < mesh.getNumNormals(); i++) {
-	//	if (angleBetween(lightVector, mesh.getNormal(i)) * (180 / (atan(1) * 4)) < 10) {
-	//		mesh.addColor(ofColor(color.r, color.g, color.b));
-	//	}
-	//	else if (angleBetween(lightVector, mesh.getNormal(i)) * (180 / (atan(1) * 4)) < 30) {
-	//		mesh.addColor(ofColor((color.r/5)*4, (color.g/5)*4, (color.b/5)*4));
-	//	}
-	//	else if (angleBetween(lightVector, mesh.getNormal(i)) * (180 / (atan(1) * 4)) < 50) {
-	//		mesh.addColor(ofColor((color.r / 5) * 3, (color.g / 5) * 3, (color.b / 5) * 3));
-	//	}
-	//	else if (angleBetween(lightVector, mesh.getNormal(i)) * (180 / (atan(1) * 4)) < 70) {
-	//		mesh.addColor(ofColor((color.r / 5) * 2, (color.g / 5) * 2, (color.b / 5) * 2));
-	//	}
-	//	else if (angleBetween(lightVector, mesh.getNormal(i)) * (180 / (atan(1) * 4)) < 90) {
-	//		mesh.addColor(ofColor(color.r / 5, color.g / 5, color.b / 5));
-	//	}
-	//	else {
-	//		mesh.addColor(ofColor(0, 0, 0));
-	//	}
-	//}
 	for (int i = 0; i < mesh.getNumNormals(); i++) {
 		float angle = angleBetween(lightVector, mesh.getNormal(i)) * (180 / (atan(1) * 4));
 		if (angle < 100) {
@@ -412,18 +398,32 @@ void createDirectionalLight(ofVec3f lightVector, ofColor color) {
 		}
 		else {
 			mesh.addColor(ofColor(0,0,0));
-		}
-			
+		}	
 	}
-	
-
-
 }
 void createAmbientLight(ofColor color) {
 	glEnable(GL_DEPTH_TEST);
 	for (int i = 0; i < mesh.getNumNormals(); i++) {
 		mesh.addColor(color);
 	}
+}
+void createPointLight(ofColor color, ofPoint origin) {
+	glEnable(GL_DEPTH_TEST);
+	for (int i = 0; i < mesh.getNumNormals(); i++) {
+		ofPoint vertex = mesh.getVertex(i);
+		ofVec3f normal = mesh.getNormal(i);
+		ofVec3f vectorBetween = findVector(vertex,origin);
+		float angle = angleBetween(vectorBetween, normal) * (180 / (atan(1) * 4));
+		if (angle < 100) {
+			mesh.addColor(ofColor(color.r - (color.r * (angle / 100)), color.g - (color.g * (angle / 100)), color.b - (color.b * (angle / 100))));
+		}
+		else {
+			mesh.addColor(ofColor(0, 0, 0));
+		}
+	}
+
+	ofDrawSphere(origin, 10);
+
 }
 void drawNormals() {
 	ofSetColor(ofColor(255, 0, 0));
@@ -470,6 +470,7 @@ void ofApp::setup(){
 	gui.setup();
 	directionalLightGui.setup();
 	ambientLightGui.setup();
+	pointLightGui.setup();
 	shiftGui.setup();
 	sinShiftGui.setup();
 	cosShiftGui.setup();
@@ -491,7 +492,11 @@ void ofApp::setup(){
 
 	gui.add(ambientLightToggle.setup("Add Ambient light", false));
 
+	gui.add(pointLightToggle.setup("Add Point Light", false));
+
 	gui.add(normalsToggle.setup("Normals", false));
+
+	gui.add(textureToggle.setup("Texture", false));
 
 	gui.add(drawWireframeToggle.setup("WireFrame", false));
 	gui.add(drawToggle.setup("Draw", true));
@@ -502,6 +507,10 @@ void ofApp::setup(){
 	directionalLightGui.add(vectorForDirectionalLight.setup("Vector", ofVec3f(0, 0, 10), ofVec3f(0, 0, 0), ofVec3f(200, 200, 200)));
 
 	ambientLightGui.add(colourForAmbientLight.setup("Colour", ofVec3f(0, 0, 0), ofVec3f(0, 0, 0), ofVec3f(255, 255, 255)));
+
+	pointLightGui.add(colourForPointLight.setup("Colour", ofVec3f(0, 0, 0), ofVec3f(0, 0, 0), ofVec3f(255, 255, 255)));
+	pointLightGui.add(originForPointLight.setup("Origin", ofVec3f(0, 0, 0), ofVec3f(-1000, -1000, -1000), ofVec3f(1000, 1000, 1000)));
+	pointLightGui.add(pointLightOrbitToggle.setup("Orbit", false));
 
 	shiftGui.add(sinToggle.setup("Sin Shifts", false));
 	shiftGui.add(cosToggle.setup("Cos Shifts", false));
@@ -568,6 +577,9 @@ void ofApp::draw(){
 	if (ambientLightToggle) {
 		ambientLightGui.draw();
 	}
+	if (pointLightToggle) {
+		pointLightGui.draw();
+	}
 	if (shiftToggle) {
 		shiftGui.draw();
 		if (sinToggle) {
@@ -583,7 +595,9 @@ void ofApp::draw(){
 	ofEnableDepthTest();
 
 	cam.begin();
-	//mTex.bind();
+	if (textureToggle) {
+		mTex.bind();
+	}
 	ofNoFill();
 
 
@@ -623,6 +637,21 @@ void ofApp::draw(){
 	}
 	if (ambientLightToggle) {
 		createAmbientLight(ofColor(colourForAmbientLight->x, colourForAmbientLight->y, colourForAmbientLight->z));
+	}
+	if (pointLightToggle) {
+		if (pointLightOrbitToggle) {
+			thetaChange += 0.01;
+			phiChange += 0.05;
+			auto spherical = cartesianToSpherical(ofPoint(1000, 1000, 1000));
+			spherical[1] += thetaChange;
+			spherical[2] += phiChange;
+			auto cartesian = sphericalToCartesian(spherical);
+			createPointLight(ofColor(colourForPointLight->x, colourForPointLight->y, colourForPointLight->z), cartesian);
+
+		}
+		else {
+			createPointLight(ofColor(colourForPointLight->x, colourForPointLight->y, colourForPointLight->z), ofPoint(originForPointLight->x, originForPointLight->y, originForPointLight->z));
+		}
 	}
 	if (shiftToggle) {
 		if (thetaTanShiftToggle) {
@@ -689,7 +718,9 @@ void ofApp::draw(){
 	if (normalsToggle) {
 		drawNormals();
 	}
-	//mTex.unbind();
+	if (textureToggle) {
+		mTex.unbind();
+	}
 	cam.end();
 	tickyTocky++;
 	tickyTocky++;

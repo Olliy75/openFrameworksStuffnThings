@@ -32,6 +32,7 @@ class ofApp : public ofBaseApp{
 		ofxPanel sphereGui;
 		ofxPanel directionalLightGui;
 		ofxPanel ambientLightGui;
+		ofxPanel pointLightGui;
 		ofxPanel shiftGui;
 		ofxPanel sinShiftGui;
 		ofxPanel cosShiftGui;
@@ -58,6 +59,7 @@ class ofApp : public ofBaseApp{
 		ofxToggle drawWireframeToggle;
 		ofxToggle drawToggle;
 		ofxToggle normalsToggle;
+		ofxToggle textureToggle;
 
 		ofxToggle shiftToggle;
 
@@ -78,6 +80,9 @@ class ofApp : public ofBaseApp{
 
 		ofxToggle directionalLightToggle;
 		ofxToggle ambientLightToggle;
+		ofxToggle pointLightToggle;
+
+		ofxToggle pointLightOrbitToggle;
 
 		ofxToggle sinToggle;
 		ofxToggle cosToggle;
@@ -103,4 +108,6 @@ class ofApp : public ofBaseApp{
 		ofxVec3Slider colourForDirectionalLight;
 		ofxVec3Slider vectorForDirectionalLight;
 		ofxVec3Slider colourForAmbientLight;
+		ofxVec3Slider colourForPointLight;
+		ofxVec3Slider originForPointLight;
 };
