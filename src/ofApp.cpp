@@ -88,6 +88,39 @@ float angleBetween(ofVec3f v1, ofVec3f v2) {
 	float angle = acos(dotProduct / magnitudeProduct);
 	return angle;
 }
+void calculateNormals() {
+	mesh.clearNormals();
+	//loop through every three, and add to array?
+	int num = mesh.getNumVertices() - 1;
+	//std::vector<int> array[1000];
+	std::map<int, std::vector<int>> map;
+	for (int i = 0; i < mesh.getNumIndices(); i += 3) {
+		map[mesh.getIndex(i)].push_back(mesh.getIndex(i + 1));
+		map[mesh.getIndex(i)].push_back(mesh.getIndex(i + 2));
+
+		map[mesh.getIndex(i + 1)].push_back(mesh.getIndex(i));
+		map[mesh.getIndex(i + 1)].push_back(mesh.getIndex(i + 2));
+
+		map[mesh.getIndex(i + 2)].push_back(mesh.getIndex(i));
+		map[mesh.getIndex(i + 2)].push_back(mesh.getIndex(i + 1));
+	}
+	//std::vector<ofVec3f> normalsArray[1000];
+	std::map<int, std::vector<ofVec3f>> normalsMap;
+	for (int i = 0; i < mesh.getNumVertices(); i++) {
+		for (int j = 0; j < map[i].size(); j+=2) {
+			ofVec3f vector1 = findVector(mesh.getVertex(i), mesh.getVertex(map[i][j]));
+			ofVec3f vector2 = findVector(mesh.getVertex(i), mesh.getVertex(map[i][j + 1]));
+			ofVec3f normal = normalize(crossProduct(vector1, vector2));
+			normalsMap[i].push_back(normal);
+		}
+		ofVec3f total = { 0,0,0 };
+		for (int j = 0; j < normalsMap[i].size(); j++) {
+			total += normalsMap[i][j];
+		}
+		total /= normalsMap[i].size();
+		mesh.addNormal(total * 10);
+	}
+}
 void drawTorusWithMeshSetup(float x, float y, float z, float r, float R, float sides) {
 	//add vertices
 	float num = sides;
@@ -109,48 +142,6 @@ void drawTorusWithMeshSetup(float x, float y, float z, float r, float R, float s
 	}
 	for (int i = 0; i < num; i++) {
 		for (int j = 0; j < num; j++) {
-			//auto sphericalCoords = cartesianToSpherical(ofPoint(plusRr[i].x - plusR[i].x, plusRr[i].y - plusR[i].y, plusRr[i].z - plusR[i].z));
-
-			//something here needs to change so that the rotation is always in the same direction and starts at the same place
-			//has something to do with calcing the difference and ending up with the wrong point but the point is still technically in the circle
-			//might have something to do with the spherical coords have the same value twice or something along those lines
-			// dfference is biggest - smallest
-
-			//check if next point is in the array, if not, rotate by 180 and add it, then change the roation to be in the opposite direction
-			//so if j = 0, check if it contains the point, and blah blah blah go again
-			//-2-2
-			//		-1,-1
-			// 
-			// if x y z are less than 0 then *-1, if xyz are less than plusRr[i], do the flip stuff, else do normal stuff
-			//ofPoint tempPoint = sphericalToCartesian(sphericalCoords);
-			//tempPoint.x + plusR[i].x;
-			//tempPoint.y + plusR[i].y;
-			//tempPoint.z + plusR[i].z;
-				//if (distance(tempPoint,ofPoint(0,0,0))<distance(plusRr[i],ofPoint(0,0,0))){
-					//sphericalCoords[2] += (((sides * j) + 180) * (acos(-1) / 180)*-1);
-					//auto cartesianCoords = sphericalToCartesian(sphericalCoords);
-					//mesh.addVertex(ofPoint(cartesianCoords.x + plusR[i].x, cartesianCoords.y + plusR[i].y, cartesianCoords.z + plusR[i].z));
-				//}
-				//else {
-					//ofDrawBitmapString(sphericalCoords, 0, 0, 0);
-					//sphericalCoords[2] += sides * (acos(-1) / 180) * j;
-					//ofDrawBitmapString(sphericalCoords[2], 0, 0, 0);
-					//auto cartesianCoords = sphericalToCartesian(sphericalCoords);
-					//ofDrawBitmapString(cartesianCoords,10,10,10);
-					//mesh.addVertex(ofPoint(cartesianCoords.x + plusR[i].x, cartesianCoords.y + plusR[i].y, cartesianCoords.z + plusR[i].z));
-					//ofDrawBitmapString(sphericalCoords[2], ofPoint(cartesianCoords.x + plusR[i].x, cartesianCoords.y + plusR[i].y, cartesianCoords.z + plusR[i].z));
-				//}
-/*
-	for (int i = 0; i < num; i++) {
-		auto sphericalCoords = cartesianToSpherical(ofPoint(plusRr[i].x - plusR[i].x, plusRr[i].y - plusR[i].y, plusRr[i].z - plusR[i].z));
-		auto cartesianCoords = sphericalToCartesian(sphericalCoords);
-		if (plusRr[i].x < 0) {
-			sphericalCoords[2] += (((sides * 0) + 180) * (acos(-1) / 180) * -1);
-			cartesianCoords = sphericalToCartesian(sphericalCoords);
-		}
-		mesh.addVertex(ofPoint(cartesianCoords.x + plusR[i].x, cartesianCoords.y + plusR[i].y, cartesianCoords.z + plusR[i].z));
-	}
-	*/
 			auto sphericalCoords = cartesianToSpherical(ofPoint(plusRr[i].x - plusR[i].x, plusRr[i].y - plusR[i].y, plusRr[i].z - plusR[i].z));
 			sphericalCoords[2] += sides * (acos(-1) / 180) * j;
 			auto cartesianCoords = sphericalToCartesian(sphericalCoords);
@@ -161,6 +152,7 @@ void drawTorusWithMeshSetup(float x, float y, float z, float r, float R, float s
 			}
 			mesh.addVertex(ofPoint(cartesianCoords.x + plusR[i].x, cartesianCoords.y + plusR[i].y, cartesianCoords.z + plusR[i].z));
 			//ofDrawBitmapString(j, ofPoint(cartesianCoords.x + plusR[i].x, cartesianCoords.y + plusR[i].y, cartesianCoords.z + plusR[i].z));
+			mesh.addTexCoord(ofVec2f(i / num, j / num));
 		}
 	}
 	//draw vertices
@@ -263,12 +255,12 @@ void drawTorusWithMeshSetup(float x, float y, float z, float r, float R, float s
 	//mesh.drawWireframe();
 	//mesh.draw();
 
-
-	for (float j = 0; j < 1; j += 1 / num) {
-		for (float i = 0; i < 1; i += 1 / num) {
-			mesh.addTexCoord(ofVec2f(0 + i, 0 + j));
-		}
-	}
+	//add texture coords
+	//for (float j = 0; j < 1; j += 1 / num) {
+	//	for (float i = 0; i < 1; i += 1 / num) {
+	//		mesh.addTexCoord(ofVec2f(0 + i, 0 + j));
+	//	}
+	//}
 	//im assiming this needs to happen for each vertex, is a2d coordinate of where in the texture to take image, 0-1 is the width n height of it
 
 }
@@ -303,7 +295,6 @@ void drawSphere(float radius, float numSides, float numStacks, ofVec3f center) {
 			mesh.addIndex(nextStackStart + j + 1);
 			mesh.addIndex(stackStart + j + 1);
 			//mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(stackStart + j), mesh.getVertex(nextStackStart + j + 1)), findVector(mesh.getVertex(stackStart + j), mesh.getVertex(stackStart + j + 1)))));
-
 		}
 	}
 	
@@ -312,6 +303,8 @@ void drawSphere(float radius, float numSides, float numStacks, ofVec3f center) {
 		mesh.addNormal(10*normalize(findVector(center, mesh.getVertex(i))));
 	}
 
+
+
 	//=Create texture coords=//
 	for (float j = 0; j < 1; j += 1 / numStacks) {
 		for (float i = 0; i < 1; i += 1 / numSides) {
@@ -319,7 +312,90 @@ void drawSphere(float radius, float numSides, float numStacks, ofVec3f center) {
 		}
 	}
 }
-// draw cube i guess
+void drawCube(ofVec3f center, float radius) {
+	//add vertices
+	ofVec3f bottomLeft = ofPoint(center - (radius / 2));
+	mesh.addVertex(bottomLeft);
+	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y, bottomLeft.z));
+	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y + radius, bottomLeft.z));
+	mesh.addVertex(ofPoint(bottomLeft.x, bottomLeft.y + radius, bottomLeft.z));
+	mesh.addVertex(ofPoint(bottomLeft.x, bottomLeft.y, bottomLeft.z + radius));
+	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y, bottomLeft.z + radius));
+	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y + radius, bottomLeft.z + radius));
+	mesh.addVertex(ofPoint(bottomLeft.x, bottomLeft.y + radius, bottomLeft.z + radius));
+	
+
+	//add indecies
+	//0
+	mesh.addIndex(0);
+	mesh.addIndex(1);
+	mesh.addIndex(2);
+	//1
+	mesh.addIndex(0);
+	mesh.addIndex(2);
+	mesh.addIndex(3);
+
+	//2
+	mesh.addIndex(4);
+	mesh.addIndex(5);
+	mesh.addIndex(6);
+	//3
+	mesh.addIndex(4);
+	mesh.addIndex(6);
+	mesh.addIndex(7);
+
+	//4
+	mesh.addIndex(6);
+	mesh.addIndex(2);
+	mesh.addIndex(3);
+	//5
+	mesh.addIndex(6);
+	mesh.addIndex(7);
+	mesh.addIndex(3);
+
+	//6
+	mesh.addIndex(1);
+	mesh.addIndex(5);
+	mesh.addIndex(2);
+	//7
+	mesh.addIndex(2);
+	mesh.addIndex(6);
+	mesh.addIndex(5);
+
+	//8
+	mesh.addIndex(0);
+	mesh.addIndex(4);
+	mesh.addIndex(1);
+	//9
+	mesh.addIndex(1);
+	mesh.addIndex(5);
+	mesh.addIndex(4);
+
+	//10
+	mesh.addIndex(0);
+	mesh.addIndex(7);
+	mesh.addIndex(3);
+	//11
+	mesh.addIndex(0);
+	mesh.addIndex(4);
+	mesh.addIndex(7);
+
+	//add Normals
+	
+	//0: 1(1*3),11(11*3),8(8*3)
+	//ofVec3f temp1 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex((1 * 3))), mesh.getVertex(mesh.getIndex((1 * 3) + 1))), findVector(mesh.getVertex(mesh.getIndex((1 * 3))), mesh.getVertex(mesh.getIndex((1 * 3) + 2)))));
+	//ofVec3f temp2 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex((11 * 3))), mesh.getVertex(mesh.getIndex((11 * 3)+1))), findVector(mesh.getVertex(mesh.getIndex((11 * 3))), mesh.getVertex(mesh.getIndex((11 * 3)+2)))));
+	//ofVec3f temp3 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex((8 * 3))), mesh.getVertex(mesh.getIndex((8 * 3) + 1))), findVector(mesh.getVertex(mesh.getIndex((8 * 3))), mesh.getVertex(mesh.getIndex((8 * 3) + 2)))));
+	//temp1 += temp3 - temp2;
+	////temp1 /= 3;
+	//mesh.addNormal(-10 * temp1);
+
+	for (int i = 0; i < mesh.getNumVertices(); i++) {
+		mesh.addNormal(10 * normalize(findVector(center, mesh.getVertex(i))));
+	}
+
+
+}
 void thetaSinShiftSphere(float frequencyMultiplier, float amplitudeMultiplier) {
 	
 	//for (int i = 0; i < mesh.getNumVertices(); i++) {
@@ -432,6 +508,11 @@ for (int i = 0; i < mesh.getNumNormals(); i++) {
 }
 ofSetColor(ofColor(255, 255, 255));
 }
+void drawVertexLabels() {
+	for (int i = 0; i < mesh.getNumVertices(); i++) {
+		ofDrawBitmapString(i, mesh.getVertex(i));
+	}
+}
 void recalculateTorusNormals(float num) {
 	mesh.clearNormals();
 	for (int j = 0; j < num - 1; j++) {
@@ -447,23 +528,25 @@ void recalculateTorusNormals(float num) {
 	mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(0), mesh.getVertex(num - 1)), findVector(mesh.getVertex(0), mesh.getVertex((num - 1) * num)))));
 }
 void recalculateSphereNormals() {
-	mesh.clearNormals();
-	for (int i = 0; i < mesh.getNumIndices(); i+=6) {
-		//i
-		//i+1
-		//i+2
-		ofVec3f temp1 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex(i)), mesh.getVertex(mesh.getIndex(i+1))), findVector(mesh.getVertex(mesh.getIndex(i)), mesh.getVertex(mesh.getIndex(i+2)))));
+	//mesh.clearNormals();
+	//for (int i = 0; i < mesh.getNumIndices(); i+=6) {
+	//	//i
+	//	//i+1
+	//	//i+2
+	//	ofVec3f temp1 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex(i)), mesh.getVertex(mesh.getIndex(i+1))), findVector(mesh.getVertex(mesh.getIndex(i)), mesh.getVertex(mesh.getIndex(i+2)))));
 
 
-		//i+3
-		//i+4
-		//i+5
-		ofVec3f temp2 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex(i+4)), mesh.getVertex(mesh.getIndex(i+3))), findVector(mesh.getVertex(mesh.getIndex(i+5)), mesh.getVertex(mesh.getIndex(i+3)))));
+	//	//i+3
+	//	//i+4
+	//	//i+5
+	//	ofVec3f temp2 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex(i+3)), mesh.getVertex(mesh.getIndex(i+4))), findVector(mesh.getVertex(mesh.getIndex(i+3)), mesh.getVertex(mesh.getIndex(i+5)))));
 
-		temp1 += temp2;
-		temp1 /= 2;
-		mesh.addNormal(10* temp1);
-	}
+	//	temp1 += temp2;
+	//	//temp1 /= 2;
+	//	mesh.addNormal(10* temp1);
+	
+	//}
+	calculateNormals();
 }
 //===============================================================================//
 void ofApp::setup(){
@@ -480,10 +563,11 @@ void ofApp::setup(){
 	
 	gui.add(sphereToggle.setup("Sphere", true));
 	gui.add(torusToggle.setup("Torus", false));
+	gui.add(cubeToggle.setup("Cube", false));
 
 	gui.add(radius.setup("Radius", 100, 10, 1000));
-	gui.add(numSides.setup("Num sides", 100, 3, 100));
-	gui.add(numStacks.setup("Num stacks", 100, 3, 100));
+	gui.add(numSides.setup("Num sides", 50, 3, 100));
+	gui.add(numStacks.setup("Num stacks", 50, 3, 100));
 	gui.add(originSlider.setup("Origin", ofVec3f(0, 0, 0), ofVec3f(-1000, -1000, -1000), ofVec3f(1000, 1000, 1000)));
 
 	gui.add(sidesAnimationToggle.setup("Number of Sides Animation", false));
@@ -495,6 +579,8 @@ void ofApp::setup(){
 	gui.add(pointLightToggle.setup("Add Point Light", false));
 
 	gui.add(normalsToggle.setup("Normals", false));
+
+	gui.add(vertexLabelsToggle.setup("Vertex Labels", false));
 
 	gui.add(textureToggle.setup("Texture", false));
 
@@ -557,6 +643,7 @@ void ofApp::setup(){
 	ofDisableAlphaBlending();
 	ofEnableDepthTest();
 	ofDisableArbTex();
+	ofEnableNormalizedTexCoords();
 	ofLoadImage(mTex, "sprinkles.png");
 }	
 //--------------------------------------------------------------
@@ -593,14 +680,11 @@ void ofApp::draw(){
 		}
 	}
 	ofEnableDepthTest();
-
 	cam.begin();
 	if (textureToggle) {
 		mTex.bind();
 	}
 	ofNoFill();
-
-
 	mesh.clear();
 	if (sphereToggle) {
 		if (sidesAnimationToggle) {
@@ -632,6 +716,9 @@ void ofApp::draw(){
 		}
 		drawTorusWithMeshSetup(originSlider->x, originSlider->y, originSlider->z, radius, radius * 2, numSides);
 	}
+	if (cubeToggle) {
+		drawCube(ofVec3f(originSlider->x, originSlider->y, originSlider->z), radius);
+	}
 	if (directionalLightToggle) {
 		createDirectionalLight(ofVec3f(vectorForDirectionalLight->x / 10, vectorForDirectionalLight->y / 10, vectorForDirectionalLight->z / 10), ofColor(colourForDirectionalLight->x, colourForDirectionalLight->y, colourForDirectionalLight->z));
 	}
@@ -647,7 +734,6 @@ void ofApp::draw(){
 			spherical[2] += phiChange;
 			auto cartesian = sphericalToCartesian(spherical);
 			createPointLight(ofColor(colourForPointLight->x, colourForPointLight->y, colourForPointLight->z), cartesian);
-
 		}
 		else {
 			createPointLight(ofColor(colourForPointLight->x, colourForPointLight->y, colourForPointLight->z), ofPoint(originForPointLight->x, originForPointLight->y, originForPointLight->z));
@@ -704,7 +790,7 @@ void ofApp::draw(){
 		}
 	}
 	if (sphereToggle) {
-		recalculateSphereNormals();
+		calculateNormals();
 	}
 	if (torusToggle) {
 		recalculateTorusNormals(numSides);
@@ -717,6 +803,9 @@ void ofApp::draw(){
 	}
 	if (normalsToggle) {
 		drawNormals();
+	}
+	if (vertexLabelsToggle) {
+		drawVertexLabels();
 	}
 	if (textureToggle) {
 		mTex.unbind();

@@ -53,6 +53,7 @@ class ofApp : public ofBaseApp{
 
 		ofxToggle sphereToggle;
 		ofxToggle torusToggle;
+		ofxToggle cubeToggle;
 
 		ofxToggle sidesAnimationToggle;
 
@@ -60,6 +61,7 @@ class ofApp : public ofBaseApp{
 		ofxToggle drawToggle;
 		ofxToggle normalsToggle;
 		ofxToggle textureToggle;
+		ofxToggle vertexLabelsToggle;
 
 		ofxToggle shiftToggle;
 
