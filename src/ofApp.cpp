@@ -118,10 +118,11 @@ void calculateNormals() {
 			total += normalsMap[i][j];
 		}
 		total /= normalsMap[i].size();
+		total = normalize(total);
 		mesh.addNormal(total * 10);
 	}
 }
-void drawTorusWithMeshSetup(float x, float y, float z, float r, float R, float sides) {
+void OldDrawTorusWithMeshSetup(float x, float y, float z, float r, float R, float sides) {
 	//add vertices
 	float num = sides;
 	sides = 360 / sides;
@@ -155,6 +156,9 @@ void drawTorusWithMeshSetup(float x, float y, float z, float r, float R, float s
 			mesh.addTexCoord(ofVec2f(i / num, j / num));
 		}
 	}
+	//for (int i = 0; i < num; i++) {
+	//	mesh.addVertex(mesh.getVertex(i));
+	//}
 	//draw vertices
 	//mesh.drawVertices();
 	//add indecies
@@ -256,12 +260,95 @@ void drawTorusWithMeshSetup(float x, float y, float z, float r, float R, float s
 	//mesh.draw();
 
 	//add texture coords
+	//int value = mesh.getNumVertices();
+	//for (int i = 0; i < num; i++) {
+	//	mesh.addVertex(mesh.getVertex(num * i));
+	//}
 	//for (float j = 0; j < 1; j += 1 / num) {
 	//	for (float i = 0; i < 1; i += 1 / num) {
 	//		mesh.addTexCoord(ofVec2f(0 + i, 0 + j));
 	//	}
 	//}
+	/*mesh.addTexCoord(ofVec2f(1, 0));
+	mesh.addTexCoord(ofVec2f(1, 1 / num));
+	mesh.addTexCoord(ofVec2f(1, (1 / num) * 2));*/
+
+
+	//for (float i = 0; i < 1; i += 1 / num) {
+	//	mesh.addTexCoord(ofVec2f(i,0));
+	//}
+	//mesh.addTexCoord(ofVec2f(1, 0));
+	//for (float i = 0; i < 1; i += 1 / num) {
+	//	mesh.addTexCoord(ofVec2f(i, 1/num));
+	//}
+	//mesh.addTexCoord(ofVec2f(1, 1 / num));
+	//for (float i = 0; i < 1; i += 1 / num) {
+	//	mesh.addTexCoord(ofVec2f(i, (1 / num)*2));
+	//}
+	//mesh.addTexCoord(ofVec2f(1, (1 / num) * 2));
+
 	//im assiming this needs to happen for each vertex, is a2d coordinate of where in the texture to take image, 0-1 is the width n height of it
+
+}
+void drawTorusWithMeshSetup(float x, float y, float z, float r, float R, float sides) {
+	//add vertices
+	float num = sides;
+	sides = 360 / sides;
+	std::vector<ofPoint> plusR;
+	std::vector<ofPoint> plusRr;
+
+	//loop from 0 to num using rotation code from before to add points into plusR vector
+	for (int i = 0; i < num+1; i++) {
+		auto temp = getDegreesRotation(x, y, x, y + R, i * sides);
+		plusR.push_back(ofPoint(temp.first, temp.second, z));
+	}
+	//loop from 0 to num using rotation code from before to add points into the plusR vector
+	for (int i = 0; i < num+1; i++) {
+		auto temp = getDegreesRotation(x, y, x, y + R + r, i * sides);
+		plusRr.push_back(ofPoint(temp.first, temp.second, z));
+	}
+	for (int i = 0; i < num+1; i++) {
+		for (int j = 0; j < num+1; j++) {
+			auto sphericalCoords = cartesianToSpherical(ofPoint(plusRr[i].x - plusR[i].x, plusRr[i].y - plusR[i].y, plusRr[i].z - plusR[i].z));
+			sphericalCoords[2] += sides * (acos(-1) / 180) * j;
+			auto cartesianCoords = sphericalToCartesian(sphericalCoords);
+			if (plusRr[i].x < 0) {
+				sphericalCoords[2] += (180) * (acos(-1) / 180);
+				sphericalCoords[2] = (atan(1) * 4) - sphericalCoords[2];
+				cartesianCoords = sphericalToCartesian(sphericalCoords);
+			}
+			mesh.addVertex(ofPoint(cartesianCoords.x + plusR[i].x, cartesianCoords.y + plusR[i].y, cartesianCoords.z + plusR[i].z));
+			//add tex coords
+			mesh.addTexCoord(ofVec2f(i / num, j / num));
+		}
+	}
+
+	//index
+	for (int i = 0; i < num; i++) {
+		int stackStart = i * (num + 1); // The starting vertex index for the current stack
+		int nextStackStart = (i + 1) * (num + 1); // The starting vertex index for the next stack
+
+		for (int j = 0; j < num; j++) {
+			mesh.addIndex(stackStart + j);
+			mesh.addIndex(nextStackStart + j);
+			mesh.addIndex(nextStackStart + j + 1);
+			//mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(stackStart + j), mesh.getVertex(nextStackStart + j)), findVector(mesh.getVertex(stackStart + j), mesh.getVertex(nextStackStart + j + 1)))));
+
+			mesh.addIndex(stackStart + j);
+			mesh.addIndex(nextStackStart + j + 1);
+			mesh.addIndex(stackStart + j + 1);
+			//mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(stackStart + j), mesh.getVertex(nextStackStart + j + 1)), findVector(mesh.getVertex(stackStart + j), mesh.getVertex(stackStart + j + 1)))));
+		}
+	}
+	
+	//normals
+	calculateNormals();
+	for (int i = 0; i < num+1; i++) {
+		mesh.setNormal(mesh.getNumNormals()-(num+1) + i, mesh.getNormal(i));
+	}
+	for (int i = 0; i < mesh.getNumNormals(); i++) {
+		mesh.setNormal(i,mesh.getNormal(i) * -1);
+	}
 
 }
 void drawSphere(float radius, float numSides, float numStacks, ofVec3f center) {
@@ -395,6 +482,16 @@ void drawCube(ofVec3f center, float radius) {
 	}
 
 
+	// add texture coordinates
+// texture coordinates are defined as (u, v) pairs, where u and v are in the range [0, 1]
+	mesh.addTexCoord(ofVec2f(0.33,0));
+	mesh.addTexCoord(ofVec2f(0.33, 0.33));
+	mesh.addTexCoord(ofVec2f(0.66, 0.33));
+	mesh.addTexCoord(ofVec2f(0.66, 0));
+	mesh.addTexCoord(ofVec2f(0, 0));
+	mesh.addTexCoord(ofVec2f(0, 0.33));
+	mesh.addTexCoord(ofVec2f(0.33, 0.66));
+	mesh.addTexCoord(ofVec2f(0.33, 0.99));
 }
 void thetaSinShiftSphere(float frequencyMultiplier, float amplitudeMultiplier) {
 	
@@ -793,7 +890,13 @@ void ofApp::draw(){
 		calculateNormals();
 	}
 	if (torusToggle) {
-		recalculateTorusNormals(numSides);
+		calculateNormals();
+		for (int i = 0; i < numSides + 1; i++) {
+			mesh.setNormal(mesh.getNumNormals() - (numSides + 1) + i, mesh.getNormal(i));
+		}
+		for (int i = 0; i < mesh.getNumNormals(); i++) {
+			mesh.setNormal(i, mesh.getNormal(i) * -1);
+		}
 	}
 	if (drawWireframeToggle) {
 		mesh.drawWireframe();
