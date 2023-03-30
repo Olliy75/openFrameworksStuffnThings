@@ -122,174 +122,6 @@ void calculateNormals() {
 		mesh.addNormal(total * 10);
 	}
 }
-void OldDrawTorusWithMeshSetup(float x, float y, float z, float r, float R, float sides) {
-	//add vertices
-	float num = sides;
-	sides = 360 / sides;
-	std::vector<ofPoint> plusR;
-	std::vector<ofPoint> plusRr;
-
-	//loop from 0 to num using rotation code from before to add points into plusR vector
-	for (int i = 0; i < num; i++) {
-		auto temp = getDegreesRotation(x, y, x, y + R, i * sides);
-		//ofDrawBitmapString(i, ofPoint(temp.first, temp.second, z));
-		plusR.push_back(ofPoint(temp.first, temp.second, z));
-	}
-	//loop from 0 to num using rotation code from before to add points into the plusR vector
-	for (int i = 0; i < num; i++) {
-		auto temp = getDegreesRotation(x, y, x, y + R + r, i * sides);
-		//ofDrawBitmapString(i, ofPoint(temp.first, temp.second, z));
-		plusRr.push_back(ofPoint(temp.first, temp.second, z));
-	}
-	for (int i = 0; i < num; i++) {
-		for (int j = 0; j < num; j++) {
-			auto sphericalCoords = cartesianToSpherical(ofPoint(plusRr[i].x - plusR[i].x, plusRr[i].y - plusR[i].y, plusRr[i].z - plusR[i].z));
-			sphericalCoords[2] += sides * (acos(-1) / 180) * j;
-			auto cartesianCoords = sphericalToCartesian(sphericalCoords);
-			if (plusRr[i].x < 0) {
-				sphericalCoords[2] += (180) * (acos(-1) / 180);
-				sphericalCoords[2] = (atan(1) * 4) - sphericalCoords[2];
-				cartesianCoords = sphericalToCartesian(sphericalCoords);
-			}
-			mesh.addVertex(ofPoint(cartesianCoords.x + plusR[i].x, cartesianCoords.y + plusR[i].y, cartesianCoords.z + plusR[i].z));
-			//ofDrawBitmapString(j, ofPoint(cartesianCoords.x + plusR[i].x, cartesianCoords.y + plusR[i].y, cartesianCoords.z + plusR[i].z));
-			mesh.addTexCoord(ofVec2f(i / num, j / num));
-		}
-	}
-	//for (int i = 0; i < num; i++) {
-	//	mesh.addVertex(mesh.getVertex(i));
-	//}
-	//draw vertices
-	//mesh.drawVertices();
-	//add indecies
-	///*
-	for (int j = 0; j < num-1; j++) {
-		float offset = j * num;
-		for (int i = 0; i < num - 1; i++) {
-			mesh.addIndex(i + offset);
-			mesh.addIndex(i + num + offset);
-			mesh.addIndex(i + 1 + offset);
-		}
-		mesh.addIndex(0 + offset);
-		mesh.addIndex(num - 1 + offset);
-		mesh.addIndex((num - 1) + num + offset);
-	}
-	//*/
-	//
-	///*
-	for (int i = 0; i < num - 1; i++) {
-		mesh.addIndex(i+(num * (num - 1))+1);
-		mesh.addIndex(i + 1);
-		mesh.addIndex(i);
-	}
-	mesh.addIndex(0);
-	mesh.addIndex(num-1);
-	mesh.addIndex((num-1)*num);
-	//*/
-	//
-	///*
-	for (int j = 0; j < num-1; j++) {
-		float offset = j * num;
-		for (int i = 0; i < num - 1; i++) {
-			mesh.addIndex(i + 1 + num + offset);
-			mesh.addIndex(i + num + offset);
-			mesh.addIndex(i + 1 + offset);
-		}
-		mesh.addIndex(0 + offset);
-		mesh.addIndex(num + offset);
-		mesh.addIndex((num - 1) + num + offset);
-	}
-	//*/
-	///*
-	for (int i = 0; i < num - 1; i++) {
-		mesh.addIndex(i + 1 + (num * (num - 1)));
-		mesh.addIndex(i + (num * (num - 1)));
-		mesh.addIndex(i);
-	}
-	mesh.addIndex((num* (num - 1)) + num - 1);
-	mesh.addIndex((num* (num - 1)));
-	mesh.addIndex((num-1));
-
-
-
-	//normals
-	//need to add them in the same order as the vertexs
-	//if i is the vertex i want to calc the normal of, use the point before and after it
-	//start the loop at 1 so that it works up to num
-	//then add 0 which is num - 1, 0 and 1
-
-	//normal takes the x y z input where the values are the magnitude in each direction, and its position in the array dictates the matching vector
-	//for (int i = 1; i < num-1; i++) {
-		//auto vec1 = mesh.getVertex(i);
-		//auto vec2 = mesh.getVertex(i + 1);
-		//ofVec3f crossProduct;
-		//fancier maths than anticipated
-		//normalize the vector afterwards
-
-		//need to use other circles unfortunaltly 
-	//}
-	for (int j = 0; j < num - 1; j++) {
-		float offset = j * num;
-		for (int i = 0; i < num - 1; i++) {
-			/*
-			auto p1 = mesh.getVertex(i + offset);
-			auto p2 = mesh.getVertex(i + num + offset);
-			auto p3 = mesh.getVertex(i + 1 + offset);
-			auto vec1 = findVector(p1, p2);
-			auto vec2 = findVector(p1, p3);
-			auto crossProd = crossProduct(vec2, vec1);
-			auto normalized = normalize(crossProd);
-			normalized *= 10;
-			mesh.addNormal(normalized);
-			*/
-			mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(i + offset), mesh.getVertex(i + 1 + offset)), findVector(mesh.getVertex(i + offset), mesh.getVertex(i + num + offset)))));
-		}
-		mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(0 + offset), mesh.getVertex((num - 1) + num + offset)),findVector(mesh.getVertex(0 + offset), mesh.getVertex(num - 1 + offset)))));
-	}
-	//*/
-	//
-	///*
-	for (int i = 0; i < num - 1; i++) {
-		mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(i), mesh.getVertex(i + (num * (num - 1)) + 1)), findVector(mesh.getVertex(i), mesh.getVertex(i + 1)))));
-	}
-	mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(0), mesh.getVertex(num - 1)), findVector(mesh.getVertex(0), mesh.getVertex((num - 1) * num)))));
-
-	//*/
-	//draw mesh
-	//mesh.drawWireframe();
-	//mesh.draw();
-
-	//add texture coords
-	//int value = mesh.getNumVertices();
-	//for (int i = 0; i < num; i++) {
-	//	mesh.addVertex(mesh.getVertex(num * i));
-	//}
-	//for (float j = 0; j < 1; j += 1 / num) {
-	//	for (float i = 0; i < 1; i += 1 / num) {
-	//		mesh.addTexCoord(ofVec2f(0 + i, 0 + j));
-	//	}
-	//}
-	/*mesh.addTexCoord(ofVec2f(1, 0));
-	mesh.addTexCoord(ofVec2f(1, 1 / num));
-	mesh.addTexCoord(ofVec2f(1, (1 / num) * 2));*/
-
-
-	//for (float i = 0; i < 1; i += 1 / num) {
-	//	mesh.addTexCoord(ofVec2f(i,0));
-	//}
-	//mesh.addTexCoord(ofVec2f(1, 0));
-	//for (float i = 0; i < 1; i += 1 / num) {
-	//	mesh.addTexCoord(ofVec2f(i, 1/num));
-	//}
-	//mesh.addTexCoord(ofVec2f(1, 1 / num));
-	//for (float i = 0; i < 1; i += 1 / num) {
-	//	mesh.addTexCoord(ofVec2f(i, (1 / num)*2));
-	//}
-	//mesh.addTexCoord(ofVec2f(1, (1 / num) * 2));
-
-	//im assiming this needs to happen for each vertex, is a2d coordinate of where in the texture to take image, 0-1 is the width n height of it
-
-}
 void drawTorusWithMeshSetup(float x, float y, float z, float r, float R, float sides) {
 	//add vertices
 	float num = sides;
@@ -402,96 +234,66 @@ void drawSphere(float radius, float numSides, float numStacks, ofVec3f center) {
 void drawCube(ofVec3f center, float radius) {
 	//add vertices
 	ofVec3f bottomLeft = ofPoint(center - (radius / 2));
+	//0,1,2,3
 	mesh.addVertex(bottomLeft);
 	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y, bottomLeft.z));
 	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y + radius, bottomLeft.z));
 	mesh.addVertex(ofPoint(bottomLeft.x, bottomLeft.y + radius, bottomLeft.z));
+
+	//4,5,6,7
 	mesh.addVertex(ofPoint(bottomLeft.x, bottomLeft.y, bottomLeft.z + radius));
 	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y, bottomLeft.z + radius));
 	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y + radius, bottomLeft.z + radius));
 	mesh.addVertex(ofPoint(bottomLeft.x, bottomLeft.y + radius, bottomLeft.z + radius));
 	
+	//0,1,5,4
+	mesh.addVertex(bottomLeft);
+	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y, bottomLeft.z));
+	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y, bottomLeft.z + radius));
+	mesh.addVertex(ofPoint(bottomLeft.x, bottomLeft.y, bottomLeft.z + radius));
+
+	//3,2,6,7
+	mesh.addVertex(ofPoint(bottomLeft.x, bottomLeft.y + radius, bottomLeft.z));
+	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y + radius, bottomLeft.z));
+	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y + radius, bottomLeft.z + radius));
+	mesh.addVertex(ofPoint(bottomLeft.x, bottomLeft.y + radius, bottomLeft.z + radius));
+
+	//4,0,3,7
+	mesh.addVertex(ofPoint(bottomLeft.x, bottomLeft.y, bottomLeft.z + radius));
+	mesh.addVertex(bottomLeft);
+	mesh.addVertex(ofPoint(bottomLeft.x, bottomLeft.y + radius, bottomLeft.z));
+	mesh.addVertex(ofPoint(bottomLeft.x, bottomLeft.y + radius, bottomLeft.z + radius));
+
+	//1,5,6,2
+	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y, bottomLeft.z));
+	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y, bottomLeft.z + radius));
+	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y + radius, bottomLeft.z + radius));
+	mesh.addVertex(ofPoint(bottomLeft.x + radius, bottomLeft.y + radius, bottomLeft.z));
 
 	//add indecies
-	//0
-	mesh.addIndex(0);
-	mesh.addIndex(1);
-	mesh.addIndex(2);
-	//1
-	mesh.addIndex(0);
-	mesh.addIndex(2);
-	mesh.addIndex(3);
-
-	//2
-	mesh.addIndex(4);
-	mesh.addIndex(5);
-	mesh.addIndex(6);
-	//3
-	mesh.addIndex(4);
-	mesh.addIndex(6);
-	mesh.addIndex(7);
-
-	//4
-	mesh.addIndex(6);
-	mesh.addIndex(2);
-	mesh.addIndex(3);
-	//5
-	mesh.addIndex(6);
-	mesh.addIndex(7);
-	mesh.addIndex(3);
-
-	//6
-	mesh.addIndex(1);
-	mesh.addIndex(5);
-	mesh.addIndex(2);
-	//7
-	mesh.addIndex(2);
-	mesh.addIndex(6);
-	mesh.addIndex(5);
-
-	//8
-	mesh.addIndex(0);
-	mesh.addIndex(4);
-	mesh.addIndex(1);
-	//9
-	mesh.addIndex(1);
-	mesh.addIndex(5);
-	mesh.addIndex(4);
-
-	//10
-	mesh.addIndex(0);
-	mesh.addIndex(7);
-	mesh.addIndex(3);
-	//11
-	mesh.addIndex(0);
-	mesh.addIndex(4);
-	mesh.addIndex(7);
+	for (int i = 0; i < mesh.getNumVertices(); i+=4) {
+		mesh.addIndex(i);
+		mesh.addIndex(i+1);
+		mesh.addIndex(i+2);
+		
+		mesh.addIndex(i);
+		mesh.addIndex(i+2);
+		mesh.addIndex(i+3);
+	}
 
 	//add Normals
-	
-	//0: 1(1*3),11(11*3),8(8*3)
-	//ofVec3f temp1 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex((1 * 3))), mesh.getVertex(mesh.getIndex((1 * 3) + 1))), findVector(mesh.getVertex(mesh.getIndex((1 * 3))), mesh.getVertex(mesh.getIndex((1 * 3) + 2)))));
-	//ofVec3f temp2 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex((11 * 3))), mesh.getVertex(mesh.getIndex((11 * 3)+1))), findVector(mesh.getVertex(mesh.getIndex((11 * 3))), mesh.getVertex(mesh.getIndex((11 * 3)+2)))));
-	//ofVec3f temp3 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex((8 * 3))), mesh.getVertex(mesh.getIndex((8 * 3) + 1))), findVector(mesh.getVertex(mesh.getIndex((8 * 3))), mesh.getVertex(mesh.getIndex((8 * 3) + 2)))));
-	//temp1 += temp3 - temp2;
-	////temp1 /= 3;
-	//mesh.addNormal(-10 * temp1);
-
 	for (int i = 0; i < mesh.getNumVertices(); i++) {
 		mesh.addNormal(10 * normalize(findVector(center, mesh.getVertex(i))));
 	}
 
 
 	// add texture coordinates
-// texture coordinates are defined as (u, v) pairs, where u and v are in the range [0, 1]
-	mesh.addTexCoord(ofVec2f(0.33,0));
-	mesh.addTexCoord(ofVec2f(0.33, 0.33));
-	mesh.addTexCoord(ofVec2f(0.66, 0.33));
-	mesh.addTexCoord(ofVec2f(0.66, 0));
-	mesh.addTexCoord(ofVec2f(0, 0));
-	mesh.addTexCoord(ofVec2f(0, 0.33));
-	mesh.addTexCoord(ofVec2f(0.33, 0.66));
-	mesh.addTexCoord(ofVec2f(0.33, 0.99));
+	for (int i = 0; i < mesh.getNumVertices(); i+=4) {
+		mesh.addTexCoord(ofVec2f(1, 0));
+		mesh.addTexCoord(ofVec2f(0, 0));
+		mesh.addTexCoord(ofVec2f(0, 1));
+		mesh.addTexCoord(ofVec2f(1, 1));
+	}
 }
 void thetaSinShiftSphere(float frequencyMultiplier, float amplitudeMultiplier) {
 	
@@ -598,6 +400,15 @@ void createPointLight(ofColor color, ofPoint origin) {
 	ofDrawSphere(origin, 10);
 
 }
+void orbit(float r, float g, float b) {
+	thetaChange += 0.01;
+	phiChange += 0.05;
+	auto spherical = cartesianToSpherical(ofPoint(1000, 1000, 1000));
+	spherical[1] += thetaChange;
+	spherical[2] += phiChange;
+	auto cartesian = sphericalToCartesian(spherical);
+	createPointLight(ofColor(r,g,b), cartesian);
+}
 void drawNormals() {
 	ofSetColor(ofColor(255, 0, 0));
 for (int i = 0; i < mesh.getNumNormals(); i++) {
@@ -609,41 +420,6 @@ void drawVertexLabels() {
 	for (int i = 0; i < mesh.getNumVertices(); i++) {
 		ofDrawBitmapString(i, mesh.getVertex(i));
 	}
-}
-void recalculateTorusNormals(float num) {
-	mesh.clearNormals();
-	for (int j = 0; j < num - 1; j++) {
-		float offset = j * num;
-		for (int i = 0; i < num - 1; i++) {
-			mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(i + offset), mesh.getVertex(i + 1 + offset)), findVector(mesh.getVertex(i + offset), mesh.getVertex(i + num + offset)))));
-		}
-		mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(0 + offset), mesh.getVertex((num - 1) + num + offset)), findVector(mesh.getVertex(0 + offset), mesh.getVertex(num - 1 + offset)))));
-	}
-	for (int i = 0; i < num - 1; i++) {
-		mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(i), mesh.getVertex(i + (num * (num - 1)) + 1)), findVector(mesh.getVertex(i), mesh.getVertex(i + 1)))));
-	}
-	mesh.addNormal(10 * normalize(crossProduct(findVector(mesh.getVertex(0), mesh.getVertex(num - 1)), findVector(mesh.getVertex(0), mesh.getVertex((num - 1) * num)))));
-}
-void recalculateSphereNormals() {
-	//mesh.clearNormals();
-	//for (int i = 0; i < mesh.getNumIndices(); i+=6) {
-	//	//i
-	//	//i+1
-	//	//i+2
-	//	ofVec3f temp1 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex(i)), mesh.getVertex(mesh.getIndex(i+1))), findVector(mesh.getVertex(mesh.getIndex(i)), mesh.getVertex(mesh.getIndex(i+2)))));
-
-
-	//	//i+3
-	//	//i+4
-	//	//i+5
-	//	ofVec3f temp2 = normalize(crossProduct(findVector(mesh.getVertex(mesh.getIndex(i+3)), mesh.getVertex(mesh.getIndex(i+4))), findVector(mesh.getVertex(mesh.getIndex(i+3)), mesh.getVertex(mesh.getIndex(i+5)))));
-
-	//	temp1 += temp2;
-	//	//temp1 /= 2;
-	//	mesh.addNormal(10* temp1);
-	
-	//}
-	calculateNormals();
 }
 //===============================================================================//
 void ofApp::setup(){
@@ -824,13 +600,7 @@ void ofApp::draw(){
 	}
 	if (pointLightToggle) {
 		if (pointLightOrbitToggle) {
-			thetaChange += 0.01;
-			phiChange += 0.05;
-			auto spherical = cartesianToSpherical(ofPoint(1000, 1000, 1000));
-			spherical[1] += thetaChange;
-			spherical[2] += phiChange;
-			auto cartesian = sphericalToCartesian(spherical);
-			createPointLight(ofColor(colourForPointLight->x, colourForPointLight->y, colourForPointLight->z), cartesian);
+			orbit(colourForPointLight->x, colourForPointLight->y, colourForPointLight->z);
 		}
 		else {
 			createPointLight(ofColor(colourForPointLight->x, colourForPointLight->y, colourForPointLight->z), ofPoint(originForPointLight->x, originForPointLight->y, originForPointLight->z));
