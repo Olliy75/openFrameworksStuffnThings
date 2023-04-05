@@ -7,10 +7,8 @@
 .vs/ofCodingTasks/
 # this was added because of git add . not working and is what chatGPT told me to do
 
-.dll
-.exe
-.exp
-.lib
+bin/*
+!bin/data/
 
 # build files
 openFrameworks.a
