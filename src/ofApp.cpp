@@ -423,6 +423,7 @@ void drawVertexLabels() {
 }
 //===============================================================================//
 void ofApp::setup(){
+	//setup all the gui
 	gui.setup();
 	directionalLightGui.setup();
 	ambientLightGui.setup();
@@ -431,9 +432,11 @@ void ofApp::setup(){
 	sinShiftGui.setup();
 	cosShiftGui.setup();
 	tanShiftGui.setup();
+	//set the gui size so the main gui isnt tiny
 	gui.setSize(ofGetWidth() / 2, ofGetHeight() / 2);
 
 	
+	//add to primary gui
 	gui.add(sphereToggle.setup("Sphere", true));
 	gui.add(torusToggle.setup("Torus", false));
 	gui.add(cubeToggle.setup("Cube", false));
@@ -462,15 +465,20 @@ void ofApp::setup(){
 
 	gui.add(shiftToggle.setup("Shifts", false));
 
+	//add to light guis
+	directionalLightGui.add(directionalLightLabel.setup("Directional Light", ""));
 	directionalLightGui.add(colourForDirectionalLight.setup("Colour", ofVec3f(180, 0, 100), ofVec3f(0, 0, 0), ofVec3f(255, 255, 255)));
 	directionalLightGui.add(vectorForDirectionalLight.setup("Vector", ofVec3f(0, 0, 10), ofVec3f(0, 0, 0), ofVec3f(200, 200, 200)));
 
+	ambientLightGui.add(ambientLightLabel.setup("Ambient Light", ""));
 	ambientLightGui.add(colourForAmbientLight.setup("Colour", ofVec3f(0, 0, 0), ofVec3f(0, 0, 0), ofVec3f(255, 255, 255)));
 
+	pointLightGui.add(pointLightLabel.setup("Point Light", ""));
 	pointLightGui.add(colourForPointLight.setup("Colour", ofVec3f(0, 0, 0), ofVec3f(0, 0, 0), ofVec3f(255, 255, 255)));
 	pointLightGui.add(originForPointLight.setup("Origin", ofVec3f(0, 0, 0), ofVec3f(-1000, -1000, -1000), ofVec3f(1000, 1000, 1000)));
 	pointLightGui.add(pointLightOrbitToggle.setup("Orbit", false));
 
+	//add to shift guis
 	shiftGui.add(sinToggle.setup("Sin Shifts", false));
 	shiftGui.add(cosToggle.setup("Cos Shifts", false));
 	shiftGui.add(tanToggle.setup("Tan Shifts", false));
@@ -511,7 +519,7 @@ void ofApp::setup(){
 	sinShiftGui.add(phiTanAmplitudeSlider.setup("Amplitude Multiplier", 1, 0, 100));
 	tanShiftGui.add(phiTanAnimation.setup("Phi Tan Shift Animation", false));
 
-
+	//loading image and a bunch of other setup stuff
 	glPointSize(4);
 	ofDisableAlphaBlending();
 	ofEnableDepthTest();
@@ -525,9 +533,7 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-	//ofLog() << ofGetFrameNum();
-	//ofLog() << ofGetFrameRate();
-
+	//draw guis
 	ofDisableDepthTest();
 	gui.draw();
 
@@ -552,6 +558,7 @@ void ofApp::draw(){
 			tanShiftGui.draw();
 		}
 	}
+	//drawing the actual shape
 	ofEnableDepthTest();
 	cam.begin();
 	if (textureToggle) {

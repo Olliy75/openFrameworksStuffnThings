@@ -23,9 +23,7 @@ class ofApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
 
 		ofEasyCam cam;
-		ofSpherePrimitive sphere;
 		ofTexture mTex;
-		ofLight light;
 
 		ofxPanel gui;
 		ofxPanel torusGui;
@@ -91,8 +89,6 @@ class ofApp : public ofBaseApp{
 		ofxToggle tanToggle;
 
 
-		ofxLabel normalsLabel;
-		ofxLabel shiftLabel;
 		ofxLabel thetaSinShiftLabel;
 		ofxLabel phiSinShiftLabel;
 		ofxLabel thetaCosShiftLabel;
@@ -101,6 +97,7 @@ class ofApp : public ofBaseApp{
 		ofxLabel phiTanShiftlabel;
 		ofxLabel directionalLightLabel;
 		ofxLabel ambientLightLabel;
+		ofxLabel pointLightLabel;
 
 		ofxIntField radius;
 		ofxIntField numSides;
