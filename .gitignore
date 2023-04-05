@@ -2,13 +2,14 @@
 # openFrameworks patterns
 #########################
 
+bin/*
+!bin/data/
 
 # this was added because of git add . not working and is what chatGPT told me to do
 .vs/ofCodingTasks/
 # this was added because of git add . not working and is what chatGPT told me to do
 
-bin/*
-!bin/data/
+
 
 # build files
 openFrameworks.a
